@@ -30,7 +30,7 @@ function printHelp(): void {
 Usage:
   pixcel validate <asset.pixcel.json>
   pixcel create-character --id <name> [--hair short|spiky|bob|ponytail|parted|hood_up] [--outfit hoodie|blazer|tshirt|sweater] [--glasses] [--headset] [--out file]
-  pixcel render <asset> [--out dir] [--directions se,sw,nw,ne] [--animation idle|walk|sit_type|inspect|all] [--format png|atlas|gif|stack|obj] [--emissive baked|split|both]
+  pixcel render <asset> [--out dir] [--directions se,sw,nw,ne] [--animation idle|walk|sit_type|inspect|talk|assign|rest_coffee|rest_sleep|all] [--format png|atlas|gif|stack|obj] [--emissive baked|split|both]
   pixcel carve --front front.png [--side side.png] [--top top.png] --id <name> --out <asset.pixcel.json> [--palette office-night] [--depth 4]
   pixcel pack <asset-or-dir...> --out <dir> [--name office-atlas] [--emissive both]
   pixcel render-room <room.json> --out <room.png> [--frame 0] [--emissive baked|split|both]

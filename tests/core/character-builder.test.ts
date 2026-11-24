@@ -6,7 +6,7 @@ import { renderAssetFrame } from "../../src/core/postprocess.js";
 import type { Direction } from "../../src/core/schema.js";
 
 describe("parametric character builder", () => {
-  it("builds a complete 4-clip rigged chibi character asset across all hair styles and outfits", async () => {
+  it("builds a complete 8-clip rigged chibi character asset across all hair styles and outfits", async () => {
     const palette = await loadPalette("office-night");
     const styles = [
       { id: "c-dev", hairStyle: "short", outfitStyle: "hoodie", glasses: true, emissiveAccent: true },
@@ -32,7 +32,7 @@ describe("parametric character builder", () => {
       expect(asset.parts).toBeDefined();
 
       const clips = compileAssetAnimations(asset);
-      expect([...clips.keys()].sort()).toEqual(["idle", "inspect", "sit_type", "walk"]);
+      expect([...clips.keys()].sort()).toEqual(["assign", "idle", "inspect", "rest_coffee", "rest_sleep", "sit_type", "talk", "walk"]);
       expect(clips.get("idle")!.length).toBe(2);
       expect(clips.get("walk")!.length).toBe(4);
       expect(clips.get("sit_type")!.length).toBe(2);
@@ -108,5 +108,57 @@ describe("parametric character builder", () => {
       }
     }
     expect(blueBleedInHeadTop).toBe(0);
+  });
+
+  it("exposes talk/assign/rest_coffee/rest_sleep clips with 2 named frames each, compiling in all 4 directions", async () => {
+    const palette = await loadPalette("office-night");
+    const asset = buildCharacterAsset(CharacterSpecSchema.parse({ id: "c-newclips", glasses: true, headset: true, hairStyle: "spiky" }));
+    expect(Object.keys(asset.animations!).sort()).toEqual(
+      ["assign", "idle", "inspect", "rest_coffee", "rest_sleep", "sit_type", "talk", "walk"],
+    );
+    const clips = compileAssetAnimations(asset);
+    for (const clip of ["talk", "assign", "rest_coffee", "rest_sleep"]) {
+      const frames = asset.animations![clip].frames;
+      expect(frames.map((f) => f.name)).toEqual([`${clip}_0`, `${clip}_1`]);
+      const compiled = clips.get(clip)!;
+      expect(compiled.length).toBe(2);
+      for (const f of compiled) {
+        for (const dir of ["se", "sw", "nw", "ne"] as Direction[]) {
+          expect(() => renderAssetFrame(asset, f.grid, palette, { direction: dir })).not.toThrow();
+        }
+      }
+    }
+  });
+
+  it("keeps every new clip's voxels connected (no floating voxels) and frames distinct from each other and from inspect", () => {
+    for (const hairStyle of ["short", "spiky", "bob", "ponytail", "parted", "hood_up"] as const) {
+      const asset = buildCharacterAsset(CharacterSpecSchema.parse({ id: "c-conn", hairStyle, glasses: true, headset: true }));
+      const clips = compileAssetAnimations(asset);
+      const ser = (g: { entries(): Iterable<[number, number, number, { material: string }]> }) =>
+        [...g.entries()].map(([x, y, z, c]) => `${x},${y},${z}:${c.material}`).sort().join("|");
+      const seen = new Set<string>();
+      for (const clip of ["talk", "assign", "rest_coffee", "rest_sleep", "inspect"]) {
+        for (const f of clips.get(clip)!) {
+          const s = ser(f.grid as never);
+          expect(seen.has(s)).toBe(false);
+          seen.add(s);
+          // 26-neighbour flood fill must reach every voxel
+          const keys = new Set<string>();
+          for (const [x, y, z] of f.grid.entries()) keys.add(`${x},${y},${z}`);
+          const start = keys.values().next().value as string;
+          const stack = [start];
+          const visited = new Set([start]);
+          while (stack.length) {
+            const [x, y, z] = stack.pop()!.split(",").map(Number);
+            for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
+              const k = `${x + dx},${y + dy},${z + dz}`;
+              if (keys.has(k) && !visited.has(k)) { visited.add(k); stack.push(k); }
+            }
+          }
+          // inspect is a pre-existing clip (its torso bob detaches the legs by design); only check the new clips
+          if (clip !== "inspect") expect(visited.size, `${hairStyle}/${f.name} has floating voxels`).toBe(keys.size);
+        }
+      }
+    }
   });
 });

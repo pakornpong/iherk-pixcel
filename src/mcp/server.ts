@@ -236,7 +236,7 @@ export function createPixcelMcpServer(rootDir: string): McpServer {
 
   server.tool(
     "create_character",
-    "Create a modular rigged chibi AI Agent character (.pixcel.json) with 4 animation clips (idle, walk, sit_type, inspect)",
+    "Create a modular rigged chibi AI Agent character (.pixcel.json) with 8 animation clips (idle, walk, sit_type, inspect, talk, assign, rest_coffee, rest_sleep)",
     {
       id: SafeIdSchema,
       role: z.string().max(64).optional(),
@@ -284,7 +284,7 @@ export function createPixcelMcpServer(rootDir: string): McpServer {
         if (args.includePreviewImage) {
           const clips = compileAssetAnimations(asset);
           const previewImgs: RGBAImage[] = [];
-          for (const clipName of ["idle", "walk", "sit_type", "inspect"]) {
+          for (const clipName of ["idle", "walk", "sit_type", "inspect", "talk", "assign", "rest_coffee", "rest_sleep"]) {
             const frames = clips.get(clipName);
             if (!frames?.length) continue;
             previewImgs.push(renderAssetFrame(asset, frames[0].grid, pal, { direction: "se", emissiveMode: "baked" }).main);

@@ -16,7 +16,7 @@ const STARTER_AGENTS = [
 ];
 
 describe("Phase 2 starter AI Agent characters & populated room", () => {
-  it("discovers all 5 starter agents via workspace and compiles all 4 animation clips", async () => {
+  it("discovers all 5 starter agents via workspace and compiles all 8 animation clips", async () => {
     const files = await listAssetFiles(process.cwd());
     const ids = files.map((f) => f.id);
     for (const agentId of STARTER_AGENTS) {
@@ -28,7 +28,7 @@ describe("Phase 2 starter AI Agent characters & populated room", () => {
       const asset = assetsMap.get(agentId);
       expect(asset).toBeDefined();
       const clips = compileAssetAnimations(asset!);
-      expect([...clips.keys()].sort()).toEqual(["idle", "inspect", "sit_type", "walk"]);
+      expect([...clips.keys()].sort()).toEqual(["assign", "idle", "inspect", "rest_coffee", "rest_sleep", "sit_type", "talk", "walk"]);
     }
   });
 

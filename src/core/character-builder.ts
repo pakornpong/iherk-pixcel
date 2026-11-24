@@ -130,6 +130,8 @@ export function buildCharacterAsset(rawSpec: CharacterSpec): PixcelAsset {
     glasses_lens: { color: "#38bdf8", kind: "glass" },
     headset_body: { color: "#1f2430", kind: "metal" },
     headset_led: { color: "#38bdf8", kind: "emissive", glowRadius: 1, glowIntensity: 0.35 },
+    coffee: { color: "#5a3418", kind: "matte" },
+    clipboard: { color: "#a9744f", kind: "matte" },
   };
 
   const sleeveMat = spec.outfitStyle === "tshirt" ? "skin" : "outfit";
@@ -229,6 +231,75 @@ export function buildCharacterAsset(rawSpec: CharacterSpec): PixcelAsset {
     { op: "box", from: [19, 18, handZ], to: [20, 22, handZ + 1], material: sleeveMat, part: "arm_r" },
     { op: "box", from: [19, 22, handZ], to: [20, 23, handZ + 1], material: "skin", part: "arm_r" },
   ];
+
+  // --- Phase 2b clips: talk / assign / rest_coffee / rest_sleep ---
+  // Frame ops are absolute (only base-grid parts are moved by partTransforms), so each clip hides the
+  // base arm(s) it replaces and redraws them. Props (mug, clipboard) exist only inside frame ops, so
+  // every other clip stays byte-identical.
+
+  // talk: both hands gesture out front, alternating low/high; head nods forward on beat
+  const talkArmFrame = (rightZ: number, leftZ: number): VoxelDslOp[] => {
+    const arm = (side: "arm_l" | "arm_r", x: number, forearmZ: number): VoxelDslOp[] => [
+      { op: "box", from: [x, 15, 15], to: [x + 1, 16, 16], material: "outfit", part: side },
+      { op: "box", from: [x, 15, 13], to: [x + 1, 16, 14], material: sleeveMat, part: side },
+      // elbow bridge so the upper arm always touches the forearm
+      { op: "box", from: [x, 17, 13], to: [x + 1, 17, forearmZ], material: sleeveMat, part: side },
+      { op: "box", from: [x, 17, forearmZ], to: [x + 1, 18, forearmZ + 1], material: sleeveMat, part: side },
+      { op: "box", from: [x, 19, forearmZ], to: [x + 1, 19, forearmZ + 1], material: "skin", part: side },
+    ];
+    return [...arm("arm_r", 19, rightZ), ...arm("arm_l", 11, leftZ)];
+  };
+
+  // assign: left arm points straight forward (thick, long), right arm holds a clipboard at chest height
+  const assignFrame = (pointZ: number, pointLen: number, boardZ: number): VoxelDslOp[] => [
+    { op: "box", from: [11, 15, pointZ], to: [12, 16, pointZ + 1], material: "outfit", part: "arm_l" },
+    { op: "box", from: [11, 17, pointZ], to: [12, pointLen, pointZ + 1], material: sleeveMat, part: "arm_l" },
+    { op: "box", from: [11, pointLen + 1, pointZ], to: [12, pointLen + 2, pointZ + 1], material: "skin", part: "arm_l" },
+    // right arm bent, holding clipboard in front of the chest
+    { op: "box", from: [19, 15, boardZ], to: [20, 16, boardZ + 3], material: "outfit", part: "arm_r" },
+    { op: "box", from: [19, 17, boardZ], to: [20, 18, boardZ + 1], material: sleeveMat, part: "arm_r" },
+    { op: "box", from: [20, 16, boardZ], to: [20, 16, boardZ + 1], material: sleeveMat, part: "arm_r" },
+    { op: "box", from: [18, 17, boardZ], to: [19, 19, boardZ + 1], material: "skin", part: "arm_r" },
+    { op: "box", from: [14, 19, boardZ - 2], to: [18, 19, boardZ + 3], material: "clipboard" },
+    { op: "box", from: [15, 20, boardZ - 1], to: [17, 20, boardZ + 2], material: "outfit_inner" },
+  ];
+
+  // rest_coffee: both hands cup a mug in front, lifting it toward the mouth (z 13 -> 17)
+  const coffeeFrame = (forearmZ: number): VoxelDslOp[] => {
+    const arm = (side: "arm_l" | "arm_r", x: number, hand: [number, number]): VoxelDslOp[] => [
+      { op: "box", from: [x, 15, 14], to: [x + 1, 16, 16], material: "outfit", part: side },
+      { op: "box", from: [x, 15, 12], to: [x + 1, 16, 13], material: sleeveMat, part: side },
+      { op: "box", from: [x, 16, 12], to: [x + 1, 16, forearmZ + 1], material: sleeveMat, part: side },
+      { op: "box", from: [x, 17, forearmZ], to: [x + 1, 18, forearmZ + 1], material: sleeveMat, part: side },
+      { op: "box", from: [hand[0], 19, forearmZ], to: [hand[1], 20, forearmZ + 1], material: "skin", part: side },
+    ];
+    return [
+      ...arm("arm_l", 11, [12, 14]),
+      ...arm("arm_r", 19, [17, 19]),
+      // mug (3 tall) with coffee surface on top
+      { op: "box", from: [15, 20, forearmZ], to: [16, 21, forearmZ + 2], material: "outfit_inner" },
+      { op: "box", from: [15, 20, forearmZ + 3], to: [16, 21, forearmZ + 3], material: "coffee" },
+    ];
+  };
+
+  // rest_sleep: sit_type pose, arms folded over the chest, head drooping; breath = torso +1 z
+  const sleepArmsFrame = (b: number): VoxelDslOp[] => [
+    { op: "box", from: [11, 14, 14 + b], to: [12, 15, 15 + b], material: sleeveMat, part: "arm_l" },
+    { op: "box", from: [11, 14, 16 + b], to: [12, 15, 17 + b], material: "outfit", part: "arm_l" },
+    { op: "box", from: [19, 14, 14 + b], to: [20, 15, 15 + b], material: sleeveMat, part: "arm_r" },
+    { op: "box", from: [19, 14, 16 + b], to: [20, 15, 17 + b], material: "outfit", part: "arm_r" },
+    { op: "box", from: [11, 16, 14 + b], to: [12, 17, 15 + b], material: sleeveMat, part: "arm_l" },
+    { op: "box", from: [19, 16, 14 + b], to: [20, 17, 15 + b], material: sleeveMat, part: "arm_r" },
+    { op: "box", from: [14, 17, 14 + b], to: [17, 17, 15 + b], material: sleeveMat },
+    { op: "box", from: [12, 17, 14 + b], to: [13, 17, 15 + b], material: "skin", part: "arm_l" },
+    { op: "box", from: [18, 17, 14 + b], to: [19, 17, 15 + b], material: "skin", part: "arm_r" },
+  ];
+  const sleepHidden = {
+    leg_l: { hide: true },
+    leg_r: { hide: true },
+    arm_l: { hide: true },
+    arm_r: { hide: true },
+  };
 
   return PixcelAssetSchema.parse({
     schemaVersion: 1,
@@ -332,6 +403,82 @@ export function buildCharacterAsset(rawSpec: CharacterSpec): PixcelAsset {
             durationMs: 480,
             partTransforms: { torso: { translate: [0, 0, 1] }, arm_r: { hide: true } },
             ops: inspectArmFrame(18),
+          },
+        ],
+      },
+      talk: {
+        loop: true,
+        frames: [
+          {
+            name: "talk_0",
+            durationMs: 300,
+            partTransforms: { arm_l: { hide: true }, arm_r: { hide: true } },
+            ops: talkArmFrame(13, 16),
+          },
+          {
+            name: "talk_1",
+            durationMs: 300,
+            partTransforms: { head: { translate: [0, 1, 0] }, arm_l: { hide: true }, arm_r: { hide: true } },
+            ops: talkArmFrame(16, 13),
+          },
+        ],
+      },
+      assign: {
+        loop: true,
+        frames: [
+          {
+            name: "assign_0",
+            durationMs: 420,
+            partTransforms: { arm_l: { hide: true }, arm_r: { hide: true } },
+            ops: assignFrame(15, 21, 13),
+          },
+          {
+            name: "assign_1",
+            durationMs: 420,
+            partTransforms: { head: { translate: [0, 1, 0] }, arm_l: { hide: true }, arm_r: { hide: true } },
+            ops: assignFrame(16, 23, 14),
+          },
+        ],
+      },
+      rest_coffee: {
+        loop: true,
+        frames: [
+          {
+            name: "rest_coffee_0",
+            durationMs: 700,
+            partTransforms: { arm_l: { hide: true }, arm_r: { hide: true } },
+            ops: coffeeFrame(13),
+          },
+          {
+            name: "rest_coffee_1",
+            durationMs: 700,
+            partTransforms: { head: { translate: [0, -1, 0] }, arm_l: { hide: true }, arm_r: { hide: true } },
+            ops: coffeeFrame(17),
+          },
+        ],
+      },
+      rest_sleep: {
+        loop: true,
+        frames: [
+          {
+            name: "rest_sleep_0",
+            durationMs: 800,
+            partTransforms: {
+              torso: { translate: [0, -1, 2] },
+              head: { translate: [1, 2, -1] },
+              ...sleepHidden,
+            },
+            ops: [...seatedLegsOps, ...sleepArmsFrame(2)],
+          },
+          {
+            name: "rest_sleep_1",
+            durationMs: 800,
+            partTransforms: {
+              torso: { translate: [0, -1, 3] },
+              head: { translate: [1, 3, -1] },
+              ...sleepHidden,
+            },
+            ops: [...seatedLegsOps, ...sleepArmsFrame(3)],
           },
         ],
       },

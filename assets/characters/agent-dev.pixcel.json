@@ -63,6 +63,14 @@
       "kind": "emissive",
       "glowRadius": 1,
       "glowIntensity": 0.35
+    },
+    "coffee": {
+      "color": "#5a3418",
+      "kind": "matte"
+    },
+    "clipboard": {
+      "color": "#a9744f",
+      "kind": "matte"
     }
   },
   "parts": {
@@ -1224,6 +1232,1577 @@
                 0,
                 1
               ]
+            },
+            "arm_r": {
+              "hide": true
+            }
+          }
+        }
+      ]
+    },
+    "talk": {
+      "loop": true,
+      "frames": [
+        {
+          "name": "talk_0",
+          "durationMs": 300,
+          "ops": [
+            {
+              "op": "box",
+              "from": [
+                19,
+                15,
+                15
+              ],
+              "to": [
+                20,
+                16,
+                16
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                15,
+                13
+              ],
+              "to": [
+                20,
+                16,
+                14
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                17,
+                13
+              ],
+              "to": [
+                20,
+                17,
+                13
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                17,
+                13
+              ],
+              "to": [
+                20,
+                18,
+                14
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                19,
+                13
+              ],
+              "to": [
+                20,
+                19,
+                14
+              ],
+              "material": "skin",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                15,
+                15
+              ],
+              "to": [
+                12,
+                16,
+                16
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                15,
+                13
+              ],
+              "to": [
+                12,
+                16,
+                14
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                17,
+                13
+              ],
+              "to": [
+                12,
+                17,
+                16
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                17,
+                16
+              ],
+              "to": [
+                12,
+                18,
+                17
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                19,
+                16
+              ],
+              "to": [
+                12,
+                19,
+                17
+              ],
+              "material": "skin",
+              "part": "arm_l"
+            }
+          ],
+          "decals": [],
+          "partTransforms": {
+            "arm_l": {
+              "hide": true
+            },
+            "arm_r": {
+              "hide": true
+            }
+          }
+        },
+        {
+          "name": "talk_1",
+          "durationMs": 300,
+          "ops": [
+            {
+              "op": "box",
+              "from": [
+                19,
+                15,
+                15
+              ],
+              "to": [
+                20,
+                16,
+                16
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                15,
+                13
+              ],
+              "to": [
+                20,
+                16,
+                14
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                17,
+                13
+              ],
+              "to": [
+                20,
+                17,
+                16
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                17,
+                16
+              ],
+              "to": [
+                20,
+                18,
+                17
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                19,
+                16
+              ],
+              "to": [
+                20,
+                19,
+                17
+              ],
+              "material": "skin",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                15,
+                15
+              ],
+              "to": [
+                12,
+                16,
+                16
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                15,
+                13
+              ],
+              "to": [
+                12,
+                16,
+                14
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                17,
+                13
+              ],
+              "to": [
+                12,
+                17,
+                13
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                17,
+                13
+              ],
+              "to": [
+                12,
+                18,
+                14
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                19,
+                13
+              ],
+              "to": [
+                12,
+                19,
+                14
+              ],
+              "material": "skin",
+              "part": "arm_l"
+            }
+          ],
+          "decals": [],
+          "partTransforms": {
+            "head": {
+              "translate": [
+                0,
+                1,
+                0
+              ]
+            },
+            "arm_l": {
+              "hide": true
+            },
+            "arm_r": {
+              "hide": true
+            }
+          }
+        }
+      ]
+    },
+    "assign": {
+      "loop": true,
+      "frames": [
+        {
+          "name": "assign_0",
+          "durationMs": 420,
+          "ops": [
+            {
+              "op": "box",
+              "from": [
+                11,
+                15,
+                15
+              ],
+              "to": [
+                12,
+                16,
+                16
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                17,
+                15
+              ],
+              "to": [
+                12,
+                21,
+                16
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                22,
+                15
+              ],
+              "to": [
+                12,
+                23,
+                16
+              ],
+              "material": "skin",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                15,
+                13
+              ],
+              "to": [
+                20,
+                16,
+                16
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                17,
+                13
+              ],
+              "to": [
+                20,
+                18,
+                14
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                20,
+                16,
+                13
+              ],
+              "to": [
+                20,
+                16,
+                14
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                18,
+                17,
+                13
+              ],
+              "to": [
+                19,
+                19,
+                14
+              ],
+              "material": "skin",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                14,
+                19,
+                11
+              ],
+              "to": [
+                18,
+                19,
+                16
+              ],
+              "material": "clipboard"
+            },
+            {
+              "op": "box",
+              "from": [
+                15,
+                20,
+                12
+              ],
+              "to": [
+                17,
+                20,
+                15
+              ],
+              "material": "outfit_inner"
+            }
+          ],
+          "decals": [],
+          "partTransforms": {
+            "arm_l": {
+              "hide": true
+            },
+            "arm_r": {
+              "hide": true
+            }
+          }
+        },
+        {
+          "name": "assign_1",
+          "durationMs": 420,
+          "ops": [
+            {
+              "op": "box",
+              "from": [
+                11,
+                15,
+                16
+              ],
+              "to": [
+                12,
+                16,
+                17
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                17,
+                16
+              ],
+              "to": [
+                12,
+                23,
+                17
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                24,
+                16
+              ],
+              "to": [
+                12,
+                25,
+                17
+              ],
+              "material": "skin",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                15,
+                14
+              ],
+              "to": [
+                20,
+                16,
+                17
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                17,
+                14
+              ],
+              "to": [
+                20,
+                18,
+                15
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                20,
+                16,
+                14
+              ],
+              "to": [
+                20,
+                16,
+                15
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                18,
+                17,
+                14
+              ],
+              "to": [
+                19,
+                19,
+                15
+              ],
+              "material": "skin",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                14,
+                19,
+                12
+              ],
+              "to": [
+                18,
+                19,
+                17
+              ],
+              "material": "clipboard"
+            },
+            {
+              "op": "box",
+              "from": [
+                15,
+                20,
+                13
+              ],
+              "to": [
+                17,
+                20,
+                16
+              ],
+              "material": "outfit_inner"
+            }
+          ],
+          "decals": [],
+          "partTransforms": {
+            "head": {
+              "translate": [
+                0,
+                1,
+                0
+              ]
+            },
+            "arm_l": {
+              "hide": true
+            },
+            "arm_r": {
+              "hide": true
+            }
+          }
+        }
+      ]
+    },
+    "rest_coffee": {
+      "loop": true,
+      "frames": [
+        {
+          "name": "rest_coffee_0",
+          "durationMs": 700,
+          "ops": [
+            {
+              "op": "box",
+              "from": [
+                11,
+                15,
+                14
+              ],
+              "to": [
+                12,
+                16,
+                16
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                15,
+                12
+              ],
+              "to": [
+                12,
+                16,
+                13
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                16,
+                12
+              ],
+              "to": [
+                12,
+                16,
+                14
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                17,
+                13
+              ],
+              "to": [
+                12,
+                18,
+                14
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                12,
+                19,
+                13
+              ],
+              "to": [
+                14,
+                20,
+                14
+              ],
+              "material": "skin",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                15,
+                14
+              ],
+              "to": [
+                20,
+                16,
+                16
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                15,
+                12
+              ],
+              "to": [
+                20,
+                16,
+                13
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                16,
+                12
+              ],
+              "to": [
+                20,
+                16,
+                14
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                17,
+                13
+              ],
+              "to": [
+                20,
+                18,
+                14
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                17,
+                19,
+                13
+              ],
+              "to": [
+                19,
+                20,
+                14
+              ],
+              "material": "skin",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                15,
+                20,
+                13
+              ],
+              "to": [
+                16,
+                21,
+                15
+              ],
+              "material": "outfit_inner"
+            },
+            {
+              "op": "box",
+              "from": [
+                15,
+                20,
+                16
+              ],
+              "to": [
+                16,
+                21,
+                16
+              ],
+              "material": "coffee"
+            }
+          ],
+          "decals": [],
+          "partTransforms": {
+            "arm_l": {
+              "hide": true
+            },
+            "arm_r": {
+              "hide": true
+            }
+          }
+        },
+        {
+          "name": "rest_coffee_1",
+          "durationMs": 700,
+          "ops": [
+            {
+              "op": "box",
+              "from": [
+                11,
+                15,
+                14
+              ],
+              "to": [
+                12,
+                16,
+                16
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                15,
+                12
+              ],
+              "to": [
+                12,
+                16,
+                13
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                16,
+                12
+              ],
+              "to": [
+                12,
+                16,
+                18
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                17,
+                17
+              ],
+              "to": [
+                12,
+                18,
+                18
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                12,
+                19,
+                17
+              ],
+              "to": [
+                14,
+                20,
+                18
+              ],
+              "material": "skin",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                15,
+                14
+              ],
+              "to": [
+                20,
+                16,
+                16
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                15,
+                12
+              ],
+              "to": [
+                20,
+                16,
+                13
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                16,
+                12
+              ],
+              "to": [
+                20,
+                16,
+                18
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                17,
+                17
+              ],
+              "to": [
+                20,
+                18,
+                18
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                17,
+                19,
+                17
+              ],
+              "to": [
+                19,
+                20,
+                18
+              ],
+              "material": "skin",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                15,
+                20,
+                17
+              ],
+              "to": [
+                16,
+                21,
+                19
+              ],
+              "material": "outfit_inner"
+            },
+            {
+              "op": "box",
+              "from": [
+                15,
+                20,
+                20
+              ],
+              "to": [
+                16,
+                21,
+                20
+              ],
+              "material": "coffee"
+            }
+          ],
+          "decals": [],
+          "partTransforms": {
+            "head": {
+              "translate": [
+                0,
+                -1,
+                0
+              ]
+            },
+            "arm_l": {
+              "hide": true
+            },
+            "arm_r": {
+              "hide": true
+            }
+          }
+        }
+      ]
+    },
+    "rest_sleep": {
+      "loop": true,
+      "frames": [
+        {
+          "name": "rest_sleep_0",
+          "durationMs": 800,
+          "ops": [
+            {
+              "op": "box",
+              "from": [
+                13,
+                16,
+                11
+              ],
+              "to": [
+                14,
+                21,
+                12
+              ],
+              "material": "pants",
+              "part": "leg_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                17,
+                16,
+                11
+              ],
+              "to": [
+                18,
+                21,
+                12
+              ],
+              "material": "pants",
+              "part": "leg_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                13,
+                20,
+                7
+              ],
+              "to": [
+                14,
+                21,
+                11
+              ],
+              "material": "pants",
+              "part": "leg_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                17,
+                20,
+                7
+              ],
+              "to": [
+                18,
+                21,
+                11
+              ],
+              "material": "pants",
+              "part": "leg_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                13,
+                20,
+                5
+              ],
+              "to": [
+                14,
+                22,
+                6
+              ],
+              "material": "shoe",
+              "part": "leg_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                17,
+                20,
+                5
+              ],
+              "to": [
+                18,
+                22,
+                6
+              ],
+              "material": "shoe",
+              "part": "leg_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                14,
+                16
+              ],
+              "to": [
+                12,
+                15,
+                17
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                14,
+                18
+              ],
+              "to": [
+                12,
+                15,
+                19
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                14,
+                16
+              ],
+              "to": [
+                20,
+                15,
+                17
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                14,
+                18
+              ],
+              "to": [
+                20,
+                15,
+                19
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                16,
+                16
+              ],
+              "to": [
+                12,
+                17,
+                17
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                16,
+                16
+              ],
+              "to": [
+                20,
+                17,
+                17
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                14,
+                17,
+                16
+              ],
+              "to": [
+                17,
+                17,
+                17
+              ],
+              "material": "outfit"
+            },
+            {
+              "op": "box",
+              "from": [
+                12,
+                17,
+                16
+              ],
+              "to": [
+                13,
+                17,
+                17
+              ],
+              "material": "skin",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                18,
+                17,
+                16
+              ],
+              "to": [
+                19,
+                17,
+                17
+              ],
+              "material": "skin",
+              "part": "arm_r"
+            }
+          ],
+          "decals": [],
+          "partTransforms": {
+            "torso": {
+              "translate": [
+                0,
+                -1,
+                2
+              ]
+            },
+            "head": {
+              "translate": [
+                1,
+                2,
+                -1
+              ]
+            },
+            "leg_l": {
+              "hide": true
+            },
+            "leg_r": {
+              "hide": true
+            },
+            "arm_l": {
+              "hide": true
+            },
+            "arm_r": {
+              "hide": true
+            }
+          }
+        },
+        {
+          "name": "rest_sleep_1",
+          "durationMs": 800,
+          "ops": [
+            {
+              "op": "box",
+              "from": [
+                13,
+                16,
+                11
+              ],
+              "to": [
+                14,
+                21,
+                12
+              ],
+              "material": "pants",
+              "part": "leg_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                17,
+                16,
+                11
+              ],
+              "to": [
+                18,
+                21,
+                12
+              ],
+              "material": "pants",
+              "part": "leg_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                13,
+                20,
+                7
+              ],
+              "to": [
+                14,
+                21,
+                11
+              ],
+              "material": "pants",
+              "part": "leg_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                17,
+                20,
+                7
+              ],
+              "to": [
+                18,
+                21,
+                11
+              ],
+              "material": "pants",
+              "part": "leg_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                13,
+                20,
+                5
+              ],
+              "to": [
+                14,
+                22,
+                6
+              ],
+              "material": "shoe",
+              "part": "leg_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                17,
+                20,
+                5
+              ],
+              "to": [
+                18,
+                22,
+                6
+              ],
+              "material": "shoe",
+              "part": "leg_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                14,
+                17
+              ],
+              "to": [
+                12,
+                15,
+                18
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                14,
+                19
+              ],
+              "to": [
+                12,
+                15,
+                20
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                14,
+                17
+              ],
+              "to": [
+                20,
+                15,
+                18
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                14,
+                19
+              ],
+              "to": [
+                20,
+                15,
+                20
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                16,
+                17
+              ],
+              "to": [
+                12,
+                17,
+                18
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                16,
+                17
+              ],
+              "to": [
+                20,
+                17,
+                18
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                14,
+                17,
+                17
+              ],
+              "to": [
+                17,
+                17,
+                18
+              ],
+              "material": "outfit"
+            },
+            {
+              "op": "box",
+              "from": [
+                12,
+                17,
+                17
+              ],
+              "to": [
+                13,
+                17,
+                18
+              ],
+              "material": "skin",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                18,
+                17,
+                17
+              ],
+              "to": [
+                19,
+                17,
+                18
+              ],
+              "material": "skin",
+              "part": "arm_r"
+            }
+          ],
+          "decals": [],
+          "partTransforms": {
+            "torso": {
+              "translate": [
+                0,
+                -1,
+                3
+              ]
+            },
+            "head": {
+              "translate": [
+                1,
+                3,
+                -1
+              ]
+            },
+            "leg_l": {
+              "hide": true
+            },
+            "leg_r": {
+              "hide": true
+            },
+            "arm_l": {
+              "hide": true
             },
             "arm_r": {
               "hide": true

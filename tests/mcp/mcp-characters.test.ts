@@ -47,8 +47,8 @@ describe("Phase 2 CLI & MCP character workflow", () => {
     ]);
     const atlas = JSON.parse(await fs.readFile(path.join(outDir, "custom-agent.atlas.json"), "utf8"));
     const keys = Object.keys(atlas.frames);
-    // 2 dirs * (2 idle + 4 walk + 2 sit_type + 2 inspect) = 20 frames
-    expect(keys.length).toBe(20);
+    // 2 dirs * (2 idle + 4 walk + 2 sit_type + 2 inspect + 2 talk + 2 assign + 2 rest_coffee + 2 rest_sleep) = 36 frames
+    expect(keys.length).toBe(36);
     expect(keys.some((k) => k.includes("/walk/"))).toBe(true);
     expect(keys.some((k) => k.includes("/sit_type/"))).toBe(true);
     expect(atlas.frames[keys[0]].isometric.animation).toBeDefined();
