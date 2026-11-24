@@ -1,0 +1,11 @@
+# iherk-pixcel Phase 2 (Modular AI Agent Characters) Implementation Plan
+
+**Goal:** Add hierarchical part rigging, multi-clip animations, a parametric chibi Character Builder, 5 starter AI Agent characters, room character compositing, and CLI/MCP/Web Preview animation support.
+**Spec:** `docs/superpowers/specs/2026-11-24-phase2-characters-design.md`
+
+## Tasks
+1. **Task 1 — Multi-Clip Schema & Hierarchical Part Rig Compiler**: Extend `schema.ts` (`animations`, `PartTransform.hide`, `RoomLayout.characters`, `AtlasFrame.isometric.animation`) & `dsl-compiler.ts` (parent→child transform chain, cycle detection, `rotateZSteps` around `pivot`, `hide`, `compileAssetAnimations`). TDD in `tests/core/rig-animations.test.ts`.
+2. **Task 2 — Parametric Character Builder**: Create `src/core/character-builder.ts` (`CharacterSpecSchema`, `buildCharacterAsset`) generating crisp 29-voxel chibi characters with 6 hair styles, 4 outfits, glasses/headset, emissive accents, and 4 clips (`idle`, `walk`, `sit_type`, `inspect`). TDD in `tests/core/character-builder.test.ts`.
+3. **Task 3 — Room Character Compositing & 5 Starter Agents**: Update `room-compositor.ts` to sort `characters` alongside `objects` (with same-tile chair-before-character ordering) and select per-character `animation` clip; update `workspace.ts` to discover `assets/characters/`; generate 5 starter agents (`agent-dev`, `agent-security`, `agent-pm`, `agent-operator`, `agent-automation`) and populate `assets/office-starter/sample-office.room.json`. TDD in `tests/assets/characters-starter.test.ts`.
+4. **Task 4 — CLI, MCP (`create_character`), Atlas & Web Preview Animation Support**: Add `create-character` & `--animation` to CLI, `create_character` & `animation` to MCP server, clip-aware sprite keys in `atlas.ts`, and Animation Clip selector in Web Preview Inspector & Sandbox. TDD in `tests/mcp/mcp-characters.test.ts` & `tests/preview/preview-server.test.ts`.
+5. **Task 5 — Visual Inspection & Final Whole-Branch Code Review**: Render `out/sample-office.png`, `out/agent-dev-poses.png`, `out/agent-dev-walk.gif`, inspect visually via `read_file`, run fresh `pro` code reviewer on `main..HEAD`, fix any Critical/Important findings with TDD.
