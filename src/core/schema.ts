@@ -159,7 +159,9 @@ export const PartDefinitionSchema = z.object({
 export const PartTransformSchema = z.object({
   translate: Vec3IntSchema.optional(),
   rotateZSteps: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  hide: z.boolean().optional(),
 });
+export type PartTransform = z.infer<typeof PartTransformSchema>;
 
 export const FrameDefinitionSchema = z.object({
   name: z.string().min(1),
@@ -169,6 +171,12 @@ export const FrameDefinitionSchema = z.object({
   partTransforms: z.record(z.string(), PartTransformSchema).optional(),
 });
 export type FrameDefinition = z.infer<typeof FrameDefinitionSchema>;
+
+export const AnimationClipSchema = z.object({
+  loop: z.boolean().default(true),
+  frames: z.array(FrameDefinitionSchema).min(1),
+});
+export type AnimationClip = z.infer<typeof AnimationClipSchema>;
 
 export const PixcelAssetSchema = z.object({
   schemaVersion: z.literal(1).default(1),
@@ -185,6 +193,7 @@ export const PixcelAssetSchema = z.object({
   ops: z.array(VoxelDslOpSchema),
   decals: z.array(DecalSchema).default([]),
   frames: z.array(FrameDefinitionSchema).optional(),
+  animations: z.record(SafeIdSchema, AnimationClipSchema).optional(),
 });
 export type PixcelAsset = z.infer<typeof PixcelAssetSchema>;
 
@@ -236,6 +245,19 @@ export const RoomLayoutSchema = z.object({
         tx: z.number().int().min(0),
         ty: z.number().int().min(0),
         direction: DirectionSchema.default("se"),
+        animation: SafeIdSchema.optional(),
+      }),
+    )
+    .default([]),
+  characters: z
+    .array(
+      z.object({
+        assetId: SafeIdSchema,
+        tx: z.number().int().min(0),
+        ty: z.number().int().min(0),
+        direction: DirectionSchema.default("se"),
+        animation: SafeIdSchema.default("idle"),
+        roleLabel: z.string().max(64).optional(),
       }),
     )
     .default([]),
@@ -264,6 +286,7 @@ export const AtlasFrameSchema = z.object({
   isometric: z.object({
     assetId: SafeIdSchema,
     direction: DirectionSchema,
+    animation: z.string().min(1).optional(),
     frameName: z.string().min(1),
     durationMs: z.number().int().min(0),
     layer: AssetLayerSchema,

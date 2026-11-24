@@ -1,4 +1,4 @@
-import { MAX_VOXEL_COORD, type Decal, type PixcelAsset, type VoxelDslOp } from "./schema.js";
+import { MAX_VOXEL_COORD, type Decal, type FrameDefinition, type PartTransform, type PixcelAsset, type VoxelDslOp } from "./schema.js";
 import { VoxelGrid } from "./voxel-grid.js";
 
 export interface CompiledFrame {
@@ -216,59 +216,116 @@ function applyDecal(grid: VoxelGrid, asset: PixcelAsset, decal: Decal): void {
   }
 }
 
+function buildPartChain(asset: PixcelAsset, partId: string): string[] {
+  const parts = asset.parts;
+  if (!parts || !(partId in parts)) return [partId];
+  const chain: string[] = [];
+  const visited = new Set<string>();
+  let cur: string | undefined = partId;
+  while (cur) {
+    if (visited.has(cur)) {
+      throw new Error(`Asset "${asset.id}" has cyclic part parent chain involving "${cur}"`);
+    }
+    visited.add(cur);
+    chain.push(cur);
+    cur = parts[cur]?.parent;
+  }
+  return chain; // [self, parent, grandparent, ...]
+}
+
+function rotatePoint90CW(
+  x: number,
+  y: number,
+  px: number,
+  py: number,
+  steps: 0 | 1 | 2 | 3,
+): [number, number] {
+  let dx = x - px;
+  let dy = y - py;
+  for (let i = 0; i < steps; i++) {
+    // 90deg CW around +Z: (+1, 0) -> (0, +1), (0, +1) -> (-1, 0)
+    const nextX = -dy;
+    const nextY = dx;
+    dx = nextX;
+    dy = nextY;
+  }
+  return [px + dx, py + dy];
+}
+
 function applyPartTransforms(
   asset: PixcelAsset,
   grid: VoxelGrid,
-  partTransforms: Record<string, { translate?: [number, number, number]; rotateZSteps?: 0 | 1 | 2 | 3 }>,
+  partTransforms: Record<string, PartTransform>,
 ): VoxelGrid {
-  const activeParts = Object.entries(partTransforms).filter(
-    ([, tf]) => tf.translate && (tf.translate[0] !== 0 || tf.translate[1] !== 0 || tf.translate[2] !== 0),
-  );
-  if (activeParts.length === 0) return grid;
+  // Validate all defined part parent chains up front so cycles always throw cleanly
+  if (asset.parts) {
+    for (const partId of Object.keys(asset.parts)) {
+      buildPartChain(asset, partId);
+    }
+  }
 
-  const transformMap = new Map(activeParts);
+  const hasAny = Object.keys(partTransforms).length > 0;
+  if (!hasAny) return grid;
+
+  const chainCache = new Map<string, string[]>();
+  const getChain = (partId: string): string[] => {
+    let c = chainCache.get(partId);
+    if (!c) {
+      c = buildPartChain(asset, partId);
+      chainCache.set(partId, c);
+    }
+    return c;
+  };
+
   const next = new VoxelGrid();
   for (const [x, y, z, cell] of grid.entries()) {
-    const tf = cell.part ? transformMap.get(cell.part) : undefined;
-    if (tf?.translate) {
-      const nx = x + tf.translate[0];
-      const ny = y + tf.translate[1];
-      const nz = z + tf.translate[2];
-      assertInBounds(asset, nx, ny, nz, `partTransform for "${cell.part}"`);
-      next.set(nx, ny, nz, cell);
-    } else {
+    if (!cell.part) {
       next.set(x, y, z, cell);
+      continue;
     }
+
+    const chain = getChain(cell.part);
+    let hidden = false;
+    let cx = x;
+    let cy = y;
+    let cz = z;
+
+    for (const pid of chain) {
+      const tf = partTransforms[pid];
+      if (!tf) continue;
+      if (tf.hide) {
+        hidden = true;
+        break;
+      }
+      if (tf.rotateZSteps && tf.rotateZSteps !== 0) {
+        const pivot = asset.parts?.[pid]?.pivot ?? [cx, cy, cz];
+        [cx, cy] = rotatePoint90CW(cx, cy, pivot[0], pivot[1], tf.rotateZSteps);
+      }
+      if (tf.translate) {
+        cx += tf.translate[0];
+        cy += tf.translate[1];
+        cz += tf.translate[2];
+      }
+    }
+
+    if (hidden) continue;
+    assertInBounds(asset, cx, cy, cz, `partTransform for "${cell.part}"`);
+    next.set(cx, cy, cz, cell);
   }
   return next;
 }
 
-export function compileAsset(asset: PixcelAsset): { baseGrid: VoxelGrid; frames: CompiledFrame[] } {
-  const baseGrid = new VoxelGrid();
-  for (const op of asset.ops) {
-    applyOp(baseGrid, asset, op);
-  }
-  for (const decal of asset.decals) {
-    applyDecal(baseGrid, asset, decal);
-  }
-
-  if (!asset.frames || asset.frames.length === 0) {
-    return {
-      baseGrid,
-      frames: [{ name: "default", durationMs: 0, grid: baseGrid.clone() }],
-    };
-  }
-
-  const frames: CompiledFrame[] = asset.frames.map((frameDef) => {
+function compileFrameList(asset: PixcelAsset, baseGrid: VoxelGrid, frameDefs: FrameDefinition[]): CompiledFrame[] {
+  return frameDefs.map((frameDef) => {
     let fg = baseGrid.clone();
+    if (frameDef.partTransforms) {
+      fg = applyPartTransforms(asset, fg, frameDef.partTransforms);
+    }
     for (const op of frameDef.ops) {
       applyOp(fg, asset, op);
     }
     for (const decal of frameDef.decals) {
       applyDecal(fg, asset, decal);
-    }
-    if (frameDef.partTransforms) {
-      fg = applyPartTransforms(asset, fg, frameDef.partTransforms);
     }
     return {
       name: frameDef.name,
@@ -276,6 +333,61 @@ export function compileAsset(asset: PixcelAsset): { baseGrid: VoxelGrid; frames:
       grid: fg,
     };
   });
+}
 
-  return { baseGrid, frames };
+function buildBaseGrid(asset: PixcelAsset): VoxelGrid {
+  const baseGrid = new VoxelGrid();
+  if (asset.parts) {
+    for (const partId of Object.keys(asset.parts)) {
+      buildPartChain(asset, partId);
+    }
+  }
+  for (const op of asset.ops) {
+    applyOp(baseGrid, asset, op);
+  }
+  for (const decal of asset.decals) {
+    applyDecal(baseGrid, asset, decal);
+  }
+  return baseGrid;
+}
+
+export function compileAssetAnimations(asset: PixcelAsset): Map<string, CompiledFrame[]> {
+  const baseGrid = buildBaseGrid(asset);
+  const map = new Map<string, CompiledFrame[]>();
+  if (asset.animations && Object.keys(asset.animations).length > 0) {
+    for (const [clipName, clip] of Object.entries(asset.animations)) {
+      map.set(clipName, compileFrameList(asset, baseGrid, clip.frames));
+    }
+    return map;
+  }
+  if (asset.frames && asset.frames.length > 0) {
+    map.set("default", compileFrameList(asset, baseGrid, asset.frames));
+    return map;
+  }
+  map.set("default", [{ name: "default", durationMs: 0, grid: baseGrid.clone() }]);
+  return map;
+}
+
+export function compileAsset(asset: PixcelAsset): { baseGrid: VoxelGrid; frames: CompiledFrame[] } {
+  const baseGrid = buildBaseGrid(asset);
+
+  if (asset.frames && asset.frames.length > 0) {
+    return {
+      baseGrid,
+      frames: compileFrameList(asset, baseGrid, asset.frames),
+    };
+  }
+
+  if (asset.animations && Object.keys(asset.animations).length > 0) {
+    const preferred = asset.animations.idle ?? Object.values(asset.animations)[0];
+    return {
+      baseGrid,
+      frames: compileFrameList(asset, baseGrid, preferred.frames),
+    };
+  }
+
+  return {
+    baseGrid,
+    frames: [{ name: "default", durationMs: 0, grid: baseGrid.clone() }],
+  };
 }
