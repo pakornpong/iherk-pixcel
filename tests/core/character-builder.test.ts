@@ -85,9 +85,9 @@ describe("parametric character builder", () => {
     const clips = compileAssetAnimations(asset);
     const inspect1 = clips.get("inspect")![1].grid;
 
-    // Shoulder/upper arm at x=21..22 must bridge z=17 between torso (z=14..16) and raised forearm (z=18..19)
+    // Slim shoulder/upper arm at x=19..20 must bridge z=17 between torso and raised forearm (z=18..19)
     let hasZ17Bridge = false;
-    for (let x = 20; x <= 22; x++) {
+    for (let x = 19; x <= 20; x++) {
       for (let y = 15; y <= 20; y++) {
         if (inspect1.has(x, y, 17)) hasZ17Bridge = true;
       }
