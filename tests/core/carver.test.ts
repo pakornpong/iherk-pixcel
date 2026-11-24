@@ -55,5 +55,8 @@ describe("2D-to-3D orthographic carver", () => {
 
     const badSide = createRGBAImage(4, 10);
     expect(() => carveFromOrthographicViews({ front, side: badSide }, { id: "bad", palette })).toThrow(/dimension|height/i);
+
+    expect(() => carveFromOrthographicViews({ front }, { id: "bad-depth", palette, depth: Number.NaN })).toThrow(/depth/i);
+    expect(() => carveFromOrthographicViews({ front }, { id: "zero-depth", palette, depth: 0 })).toThrow(/depth/i);
   });
 });

@@ -80,6 +80,7 @@ export function renderAssetFrame(
     footprintTiles: asset.footprintTiles,
     direction: opts.direction,
     anchorMode: opts.anchorMode,
+    modularWallSeam: outlineMode === "top-only",
   });
 
   // Precompute material definitions and shade ramps
@@ -178,7 +179,7 @@ export function renderAssetFrame(
 
   // Step 2: Optional subtle interior creases on depth discontinuity >= 3 or part boundary
   if (interiorCreases && outlineMode !== "none") {
-    const depthThreshold = 3 * 1024;
+    const depthThreshold = 3 * 65536;
     for (let gy = 0; gy < gb.height; gy++) {
       for (let gx = 0; gx < gb.width; gx++) {
         const gi = gy * gb.width + gx;
@@ -235,15 +236,16 @@ export function renderAssetFrame(
           gx >= 0 && gx < gb.width && gy >= 0 && gy < gb.height && gb.face[gy * gb.width + gx] !== 0;
         if (isOpaque) continue;
 
-        // For "top-only" (modular wall segments), skip vertical side seam outlines so adjacent walls stitch cleanly
+        // For "top-only" (modular wall segments), only outline directly above top (+Z) faces so adjacent tiles stitch seamlessly
         let bestMatId = -1;
         let bestDepth = -0x3fffffff;
         for (const [dx, dy] of dirs) {
-          if (outlineMode === "top-only" && dy === 0) continue;
+          if (outlineMode === "top-only" && (dx !== 0 || dy !== 1)) continue;
           const ngx = gx + dx;
           const ngy = gy + dy;
           if (ngx < 0 || ngx >= gb.width || ngy < 0 || ngy >= gb.height) continue;
           const ni = ngy * gb.width + ngx;
+          if (outlineMode === "top-only" && gb.face[ni] !== 1) continue;
           if (gb.face[ni] !== 0 && gb.depth[ni] > bestDepth) {
             bestDepth = gb.depth[ni];
             bestMatId = gb.materialIds[ni];

@@ -58,6 +58,7 @@ export function rasterizeIsometric(
     footprintTiles: [number, number];
     direction: Direction;
     anchorMode?: AnchorMode;
+    modularWallSeam?: boolean;
   },
 ): GBuffer {
   const tileMetrics = getTileMetrics(opts.tilePreset);
@@ -194,10 +195,33 @@ export function rasterizeIsometric(
   const materialIds = new Int16Array(pixelCount).fill(-1);
   const partIds = new Int16Array(pixelCount).fill(-1);
 
+  // Detect modular wall tiling axis so seam end-caps don't emit mismatched corner faces
+  let seamlessAlongX = false;
+  let seamlessAlongY = false;
+  if (opts.modularWallSeam && voxels.length > 0) {
+    let minVX = Infinity;
+    let maxVX = -Infinity;
+    let minVY = Infinity;
+    let maxVY = -Infinity;
+    for (const v of voxels) {
+      if (v.x < minVX) minVX = v.x;
+      if (v.x > maxVX) maxVX = v.x;
+      if (v.y < minVY) minVY = v.y;
+      if (v.y > maxVY) maxVY = v.y;
+    }
+    const spanX = maxVX - minVX + 1;
+    const spanY = maxVY - minVY + 1;
+    if (minVY === 0 && maxVY === footprintVoxelsY - 1 && spanY > spanX) {
+      seamlessAlongY = true;
+    } else if (minVX === 0 && maxVX === footprintVoxelsX - 1 && spanX > spanY) {
+      seamlessAlongX = true;
+    }
+  }
+
   for (const v of voxels) {
     const hasTopNeighbor = rotatedGrid.has(v.x, v.y, v.z + 1);
-    const hasRightNeighbor = rotatedGrid.has(v.x + 1, v.y, v.z);
-    const hasLeftNeighbor = rotatedGrid.has(v.x, v.y + 1, v.z);
+    const hasRightNeighbor = rotatedGrid.has(v.x + 1, v.y, v.z) || (seamlessAlongX && v.x === footprintVoxelsX - 1);
+    const hasLeftNeighbor = rotatedGrid.has(v.x, v.y + 1, v.z) || (seamlessAlongY && v.y === footprintVoxelsY - 1);
 
     // Completely hidden interior voxel
     if (hasTopNeighbor && hasRightNeighbor && hasLeftNeighbor) continue;
@@ -235,7 +259,7 @@ export function rasterizeIsometric(
           if (px < 0 || px >= width || py < 0 || py >= height) continue;
 
           const idx = py * width + px;
-          const dKey = (sx + sy) * 1024 + sz;
+          const dKey = (sx + sy) * 65536 + sz;
           if (dKey >= depth[idx]) {
             depth[idx] = dKey;
             face[idx] = fKind;

@@ -31,11 +31,17 @@ export type EmissiveMode = z.infer<typeof EmissiveModeSchema>;
 export const AnchorModeSchema = z.enum(["bottom-diamond", "center-floor"]);
 export type AnchorMode = z.infer<typeof AnchorModeSchema>;
 
-export const Vec3IntSchema = z.tuple([z.number().int(), z.number().int(), z.number().int()]);
+export const MAX_VOXEL_COORD = 512;
+
+export const Vec3IntSchema = z.tuple([
+  z.number().int().min(-MAX_VOXEL_COORD).max(MAX_VOXEL_COORD),
+  z.number().int().min(-MAX_VOXEL_COORD).max(MAX_VOXEL_COORD),
+  z.number().int().min(-MAX_VOXEL_COORD).max(MAX_VOXEL_COORD),
+]);
 export const NonNegVec3IntSchema = z.tuple([
-  z.number().int().min(0),
-  z.number().int().min(0),
-  z.number().int().min(0),
+  z.number().int().min(0).max(MAX_VOXEL_COORD),
+  z.number().int().min(0).max(MAX_VOXEL_COORD),
+  z.number().int().min(0).max(MAX_VOXEL_COORD),
 ]);
 export const Vec2IntSchema = z.tuple([z.number().int(), z.number().int()]);
 
@@ -61,17 +67,17 @@ const HollowBoxOpSchema = z.object({
   op: z.literal("hollowBox"),
   from: NonNegVec3IntSchema,
   to: NonNegVec3IntSchema,
-  thickness: z.number().int().min(1).default(1),
+  thickness: z.number().int().min(1).max(64).default(1),
   material: MaterialRefSchema,
   part: z.string().min(1).optional(),
 });
 
 const CylinderOpSchema = z.object({
   op: z.literal("cylinder"),
-  center: z.tuple([z.number().int().min(0), z.number().int().min(0)]),
-  zFrom: z.number().int().min(0),
-  zTo: z.number().int().min(0),
-  radius: z.number().min(0),
+  center: z.tuple([z.number().int().min(0).max(MAX_VOXEL_COORD), z.number().int().min(0).max(MAX_VOXEL_COORD)]),
+  zFrom: z.number().int().min(0).max(MAX_VOXEL_COORD),
+  zTo: z.number().int().min(0).max(MAX_VOXEL_COORD),
+  radius: z.number().min(0).max(256),
   material: MaterialRefSchema,
   part: z.string().min(1).optional(),
 });
@@ -172,7 +178,7 @@ export const PixcelAssetSchema = z.object({
   outlineMode: OutlineModeSchema.default("silhouette"),
   tilePreset: TilePresetSchema.default("64x32"),
   voxelsPerTile: z.union([z.literal(16), z.literal(32)]).default(32),
-  footprintTiles: z.tuple([z.number().int().min(1), z.number().int().min(1)]).default([1, 1]),
+  footprintTiles: z.tuple([z.number().int().min(1).max(16), z.number().int().min(1).max(16)]).default([1, 1]),
   palette: z.string().min(1).default("office-night"),
   materials: z.record(z.string().min(1), MaterialDefinitionSchema),
   parts: z.record(z.string().min(1), PartDefinitionSchema).optional(),

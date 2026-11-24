@@ -5,7 +5,6 @@ import type { AddressInfo } from "node:net";
 import path from "node:path";
 import { compileAsset } from "../core/dsl-compiler.js";
 import { encodePNG } from "../core/exporters/png.js";
-import { loadPalette } from "../core/palette.js";
 import { renderAssetFrame } from "../core/postprocess.js";
 import { renderRoom } from "../core/room-compositor.js";
 import {
@@ -23,9 +22,11 @@ import {
   listAssetFiles,
   loadAllAssetsMap,
   loadAssetByIdOrPath,
+  loadWorkspaceSafePalette,
   PACKAGE_ROOT,
   resolveSafeWorkspacePath,
 } from "../core/workspace.js";
+import { ZodError } from "zod";
 
 const PUBLIC_DIR = path.join(PACKAGE_ROOT, "src", "preview", "public");
 
@@ -58,7 +59,6 @@ export async function startPreviewServer(opts: {
   const absRoot = path.resolve(opts.rootDir);
   const host = opts.host ?? "127.0.0.1";
   const requestedPort = opts.port ?? 4173;
-  const paletteDirs = [path.join(absRoot, "assets", "palettes")];
 
   const sseClients = new Set<ServerResponse>();
   const watchers: FSWatcher[] = [];
@@ -164,7 +164,7 @@ export async function startPreviewServer(opts: {
         const layerParam = reqUrl.searchParams.get("layer") ?? "main";
 
         const { asset } = await loadAssetByIdOrPath(absRoot, idCheck.data);
-        const pal = await loadPalette(asset.palette, paletteDirs);
+        const pal = await loadWorkspaceSafePalette(absRoot, asset.palette);
         const { frames } = compileAsset(asset);
         const frame = frames[frameIdx % frames.length];
         const rendered = renderAssetFrame(asset, frame.grid, pal, {
@@ -216,7 +216,7 @@ export async function startPreviewServer(opts: {
       if (req.method === "POST" && pathname === "/api/room/render") {
         const body = JSON.parse(await readBody(req)) as { room?: unknown; frameIndex?: number; emissiveMode?: string };
         const room = RoomLayoutSchema.parse(body.room);
-        const pal = await loadPalette(room.palette, paletteDirs);
+        const pal = await loadWorkspaceSafePalette(absRoot, room.palette);
         const assetsMap = await loadAllAssetsMap(absRoot);
         const rendered = renderRoom(room, assetsMap, pal, {
           frameIndex: body.frameIndex ?? 0,
@@ -237,7 +237,14 @@ export async function startPreviewServer(opts: {
       sendJson(res, 404, { error: `Not found: ${pathname}` });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      const status = msg.includes("Path traversal") || msg.includes("escapes workspace") || msg.includes("Invalid") ? 400 : 500;
+      const isClientError =
+        err instanceof URIError ||
+        err instanceof SyntaxError ||
+        err instanceof ZodError ||
+        msg.includes("Path traversal") ||
+        msg.includes("escapes workspace") ||
+        msg.includes("Invalid");
+      const status = isClientError ? 400 : 500;
       sendJson(res, status, { error: msg });
     }
   });

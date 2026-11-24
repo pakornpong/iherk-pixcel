@@ -24,9 +24,11 @@ describe("CLI and Stdio MCP server", () => {
     expect(Object.keys(atlasJson.frames).length).toBeGreaterThanOrEqual(4);
 
     const roomOut = path.join(tmpDir, "office.png");
-    await execFileAsync(tsxBin, [cliEntry, "render-room", "assets/office-starter/sample-office.room.json", "--out", roomOut]);
+    await execFileAsync(tsxBin, [cliEntry, "render-room", "assets/office-starter/sample-office.room.json", "--out", roomOut, "--emissive", "both"]);
     const roomStat = await fs.stat(roomOut);
     expect(roomStat.size).toBeGreaterThan(1000);
+    const roomEmissiveStat = await fs.stat(path.join(tmpDir, "office_emissive.png"));
+    expect(roomEmissiveStat.size).toBeGreaterThan(100);
   }, 30000);
 
   it("spawns pixcel mcp over stdio, creates & renders an asset with base64 PNG, and rejects path traversal", async () => {
@@ -77,6 +79,21 @@ describe("CLI and Stdio MCP server", () => {
 
     const bad = await client.callTool({ name: "read_asset", arguments: { id: "../../etc/passwd" } });
     expect(bad.isError).toBe(true);
+
+    // Palette confinement across MCP tools
+    const badPal = await client.callTool({ name: "get_palette", arguments: { name: "../../package.json" } });
+    expect(badPal.isError).toBe(true);
+    const badCwdPal = await client.callTool({ name: "get_palette", arguments: { name: "package.json" } });
+    expect(badCwdPal.isError).toBe(true);
+
+    // MCP render_room with emissiveMode: "both" must also emit *_emissive.png
+    const roomRes = await client.callTool({
+      name: "render_room",
+      arguments: { outPath: "out/mcp-room.png", emissiveMode: "both", includePreviewImage: false },
+    });
+    expect(roomRes.isError).toBeFalsy();
+    const mcpEmissiveStat = await fs.stat(path.join(tmpDir, "out/mcp-room_emissive.png"));
+    expect(mcpEmissiveStat.size).toBeGreaterThan(100);
 
     await client.close();
   }, 30000);

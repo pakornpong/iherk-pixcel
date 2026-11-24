@@ -1,10 +1,18 @@
-import type { Decal, PixcelAsset, VoxelDslOp } from "./schema.js";
+import { MAX_VOXEL_COORD, type Decal, type PixcelAsset, type VoxelDslOp } from "./schema.js";
 import { VoxelGrid } from "./voxel-grid.js";
 
 export interface CompiledFrame {
   name: string;
   durationMs: number;
   grid: VoxelGrid;
+}
+
+function assertInBounds(asset: PixcelAsset, x: number, y: number, z: number, context: string): void {
+  if (x < 0 || y < 0 || z < 0 || x > MAX_VOXEL_COORD || y > MAX_VOXEL_COORD || z > MAX_VOXEL_COORD) {
+    throw new Error(
+      `Asset "${asset.id}" ${context} produced out-of-bounds/negative voxel coordinate (${x}, ${y}, ${z}); valid range is 0..${MAX_VOXEL_COORD}`,
+    );
+  }
 }
 
 function assertMaterialValid(asset: PixcelAsset, material: string | null, context: string): void {
@@ -39,6 +47,7 @@ function applyOp(grid: VoxelGrid, asset: PixcelAsset, op: VoxelDslOp): void {
       const mx = op.axis === "x" ? Math.round(2 * op.pivot - x) : x;
       const my = op.axis === "y" ? Math.round(2 * op.pivot - y) : y;
       const mz = op.axis === "z" ? Math.round(2 * op.pivot - z) : z;
+      assertInBounds(asset, mx, my, mz, `mirror op (${op.axis})`);
       grid.set(mx, my, mz, cell);
     }
     return;
@@ -108,9 +117,8 @@ function applyOp(grid: VoxelGrid, asset: PixcelAsset, op: VoxelDslOp): void {
             if (dx * dx + dy * dy <= rSq) {
               const vx = cx + dx;
               const vy = cy + dy;
-              if (vx >= 0 && vy >= 0) {
-                writeVoxel(grid, vx, vy, z, op.material, op.part);
-              }
+              assertInBounds(asset, vx, vy, z, "cylinder op");
+              writeVoxel(grid, vx, vy, z, op.material, op.part);
             }
           }
         }
@@ -202,14 +210,14 @@ function applyDecal(grid: VoxelGrid, asset: PixcelAsset, decal: Decal): void {
           y = oy + rowIdx;
           break;
       }
-      if (x >= 0 && y >= 0 && z >= 0) {
-        grid.set(x, y, z, decal.part ? { material: mat, part: decal.part } : { material: mat });
-      }
+      assertInBounds(asset, x, y, z, `decal on face ${decal.face}`);
+      grid.set(x, y, z, decal.part ? { material: mat, part: decal.part } : { material: mat });
     }
   }
 }
 
 function applyPartTransforms(
+  asset: PixcelAsset,
   grid: VoxelGrid,
   partTransforms: Record<string, { translate?: [number, number, number]; rotateZSteps?: 0 | 1 | 2 | 3 }>,
 ): VoxelGrid {
@@ -223,7 +231,11 @@ function applyPartTransforms(
   for (const [x, y, z, cell] of grid.entries()) {
     const tf = cell.part ? transformMap.get(cell.part) : undefined;
     if (tf?.translate) {
-      next.set(x + tf.translate[0], y + tf.translate[1], z + tf.translate[2], cell);
+      const nx = x + tf.translate[0];
+      const ny = y + tf.translate[1];
+      const nz = z + tf.translate[2];
+      assertInBounds(asset, nx, ny, nz, `partTransform for "${cell.part}"`);
+      next.set(nx, ny, nz, cell);
     } else {
       next.set(x, y, z, cell);
     }
@@ -256,7 +268,7 @@ export function compileAsset(asset: PixcelAsset): { baseGrid: VoxelGrid; frames:
       applyDecal(fg, asset, decal);
     }
     if (frameDef.partTransforms) {
-      fg = applyPartTransforms(fg, frameDef.partTransforms);
+      fg = applyPartTransforms(asset, fg, frameDef.partTransforms);
     }
     return {
       name: frameDef.name,

@@ -8,6 +8,7 @@ const state = {
   zoom: 4,
   playing: false,
   layer: "main",
+  outlineOverride: "",
   showGrid: true,
   showAnchor: true,
   room: null,
@@ -47,7 +48,14 @@ async function drawInspector() {
   el("frame-label").textContent = `Frame ${state.frame}`;
   el("zoom-val").textContent = String(state.zoom);
 
-  const url = `/api/render/${encodeURIComponent(state.selectedAsset)}?dir=${dir}&frame=${state.frame}&layer=${state.layer}&t=${state.cacheBust}`;
+  const meta = state.assets.find((a) => a.id === state.selectedAsset);
+  const frameCount = meta ? meta.frameCount : 1;
+  const scrubber = el("frame-range");
+  scrubber.max = String(Math.max(0, frameCount - 1));
+  scrubber.value = String(state.frame % frameCount);
+
+  const outlineQuery = state.outlineOverride ? `&outline=${encodeURIComponent(state.outlineOverride)}` : "";
+  const url = `/api/render/${encodeURIComponent(state.selectedAsset)}?dir=${dir}&frame=${state.frame}&layer=${state.layer}${outlineQuery}&t=${state.cacheBust}`;
   const res = await fetch(url);
   if (!res.ok) return;
 
@@ -187,6 +195,14 @@ el("zoom-range").oninput = (e) => {
   state.zoom = Number(e.target.value);
   drawInspector();
 };
+el("frame-range").oninput = (e) => {
+  state.frame = Number(e.target.value);
+  drawInspector();
+};
+el("outline-select").onchange = (e) => {
+  state.outlineOverride = e.target.value;
+  drawInspector();
+};
 el("emissive-select").onchange = (e) => {
   state.layer = e.target.value;
   drawInspector();
@@ -235,6 +251,20 @@ el("btn-sandbox-play").onclick = () => {
     }, 500);
   }
 };
+el("btn-sandbox-load").onclick = async () => {
+  const file = el("room-file-input").value.trim();
+  const q = file ? `?file=${encodeURIComponent(file)}` : "";
+  const res = await fetch(`/api/room${q}`);
+  if (res.ok) {
+    const data = await res.json();
+    state.room = data.room;
+    el("live-status").textContent = `Loaded ${data.file}`;
+    await drawSandbox();
+  } else {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    el("live-status").textContent = `Load error: ${err.error}`;
+  }
+};
 el("btn-sandbox-save").onclick = async () => {
   if (!state.room) return;
   const file = el("room-file-input").value.trim() || "custom-office.room.json";
@@ -245,6 +275,9 @@ el("btn-sandbox-save").onclick = async () => {
   });
   if (res.ok) {
     el("live-status").textContent = `Saved ${file}`;
+  } else {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    el("live-status").textContent = `Save error: ${err.error}`;
   }
 };
 

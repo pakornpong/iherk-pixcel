@@ -1,11 +1,25 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { PixcelAssetSchema, SafeIdSchema, type PixcelAsset } from "./schema.js";
+import { loadPalette } from "./palette.js";
+import { PixcelAssetSchema, SafeIdSchema, type PaletteDefinition, type PixcelAsset } from "./schema.js";
 
 export const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 export const BUILTIN_ASSETS_DIR = path.join(PACKAGE_ROOT, "assets", "office-starter");
 export const BUILTIN_PALETTES_DIR = path.join(PACKAGE_ROOT, "assets", "palettes");
+
+export async function loadWorkspaceSafePalette(rootDir: string, nameOrPath: string): Promise<PaletteDefinition> {
+  const absRoot = path.resolve(rootDir);
+  const workspacePalettesDir = path.join(absRoot, "assets", "palettes");
+  if (SafeIdSchema.safeParse(nameOrPath).success) {
+    return loadPalette(nameOrPath, [workspacePalettesDir]);
+  }
+  const safePath = resolveSafeWorkspacePath(absRoot, nameOrPath);
+  if (!safePath.endsWith(".palette.json") && !safePath.endsWith(".hex")) {
+    throw new Error(`Invalid palette file "${nameOrPath}": expected a palette ID, .palette.json, or .hex file inside workspace`);
+  }
+  return loadPalette(safePath, [workspacePalettesDir]);
+}
 
 export function resolveSafeWorkspacePath(rootDir: string, relPath: string): string {
   const absRoot = path.resolve(rootDir);

@@ -55,4 +55,80 @@ describe("topological isometric room compositor", () => {
     expect(res.width).toBeGreaterThan(100);
     expect(res.height).toBeGreaterThan(60);
   });
+
+  it("draws back-wall decor behind foreground walls and masks occluded emissive pixels in split/both modes", async () => {
+    const palette = await loadPalette("office-night");
+    const backWall = PixcelAssetSchema.parse({
+      schemaVersion: 1, id: "w-back", layer: "wall", outlineMode: "none", tilePreset: "64x32", voxelsPerTile: 16, footprintTiles: [1, 1],
+      materials: { s: { color: "#252e45", kind: "matte" } },
+      ops: [{ op: "box", from: [0, 0, 0], to: [1, 15, 20], material: "s" }],
+    });
+    const decor = PixcelAssetSchema.parse({
+      schemaVersion: 1, id: "decor-bright", layer: "wall-decor", outlineMode: "none", tilePreset: "64x32", voxelsPerTile: 16, footprintTiles: [1, 1],
+      materials: { w: { color: "#e6e9ef", kind: "emissive", glowRadius: 0, glowIntensity: 0 } },
+      ops: [{ op: "box", from: [2, 2, 4], to: [2, 13, 16], material: "w" }],
+    });
+    const fgBlocker = PixcelAssetSchema.parse({
+      schemaVersion: 1, id: "fg-blocker", layer: "wall", outlineMode: "none", tilePreset: "64x32", voxelsPerTile: 16, footprintTiles: [1, 1],
+      materials: { blk: { color: "#b93848", kind: "matte" } },
+      ops: [{ op: "box", from: [0, 0, 0], to: [15, 15, 40], material: "blk" }],
+    });
+    // 1. Back-wall decor at (0,0) must NOT draw on top of fg-blocker at (1,1):
+    //    No bright white (#e6e9ef) decor pixels may appear inside the center overlap band where fg-blocker covers it,
+    //    AND when fg-blocker is an opaque object in front of a glowing object, emissive must be cleared behind fg-blocker!
+    const fgObj = PixcelAssetSchema.parse({
+      schemaVersion: 1, id: "fg-obj", layer: "object", outlineMode: "none", tilePreset: "64x32", voxelsPerTile: 16, footprintTiles: [1, 1],
+      materials: { blk: { color: "#b93848", kind: "matte" } },
+      ops: [{ op: "box", from: [0, 0, 0], to: [15, 15, 22], material: "blk" }],
+    });
+    const room = RoomLayoutSchema.parse({
+      schemaVersion: 1, id: "occlusion-test", tilePreset: "64x32", widthTiles: 3, depthTiles: 3,
+      floors: [],
+      walls: [
+        { assetId: "w-back", tx: 0, ty: 0, edge: "nw" },
+        { assetId: "fg-blocker", tx: 1, ty: 1, edge: "nw" },
+      ],
+      wallDecor: [{ assetId: "decor-bright", tx: 0, ty: 0, edge: "nw" }],
+      objects: [{ assetId: "fg-obj", tx: 1, ty: 1, direction: "se" }],
+    });
+    const res = renderRoom(
+      room,
+      new Map([["w-back", backWall], ["decor-bright", decor], ["fg-blocker", fgBlocker], ["fg-obj", fgObj]]),
+      palette,
+      { emissiveMode: "both" },
+    );
+    let leakedEmissive = 0;
+    for (let i = 0; i < res.main.data.length; i += 4) {
+      if (res.main.data[i] > 140 && res.main.data[i + 1] < 90 && res.main.data[i + 2] < 100) {
+        if (res.emissive && res.emissive.data[i + 3] > 0) leakedEmissive++;
+      }
+    }
+    expect(leakedEmissive).toBe(0);
+
+    // Also test wall-only ordering (without fg-obj): white decor at (0,0) must be hidden behind fg-blocker wall at (1,1)
+    const wallOnlyRoom = RoomLayoutSchema.parse({
+      schemaVersion: 1, id: "wall-order-test", tilePreset: "64x32", widthTiles: 3, depthTiles: 3,
+      floors: [],
+      walls: [
+        { assetId: "w-back", tx: 0, ty: 0, edge: "nw" },
+        { assetId: "fg-blocker", tx: 1, ty: 1, edge: "nw" },
+      ],
+      wallDecor: [{ assetId: "decor-bright", tx: 0, ty: 0, edge: "nw" }],
+      objects: [],
+    });
+    const wallOnlyRes = renderRoom(
+      wallOnlyRoom,
+      new Map([["w-back", backWall], ["decor-bright", decor], ["fg-blocker", fgBlocker]]),
+      palette,
+      { emissiveMode: "baked" },
+    );
+    // White decor sits at (0,0) z=4..16; fg-blocker is 16x16x22 at (1,1) which fully covers (0,0) z=0..16 in screen space
+    let visibleWhitePixels = 0;
+    for (let i = 0; i < wallOnlyRes.main.data.length; i += 4) {
+      if (wallOnlyRes.main.data[i] > 210 && wallOnlyRes.main.data[i + 1] > 210 && wallOnlyRes.main.data[i + 2] > 210) {
+        visibleWhitePixels++;
+      }
+    }
+    expect(visibleWhitePixels).toBe(0);
+  });
 });

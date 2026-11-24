@@ -38,6 +38,17 @@
             <button id="btn-play">▶ Play</button>
             <span id="frame-label">Frame 0</span>
           </div>
+          <label>Frame Scrubber
+            <input id="frame-range" type="range" min="0" max="0" value="0" />
+          </label>
+          <label>Outline Mode
+            <select id="outline-select">
+              <option value="">Asset Default</option>
+              <option value="silhouette">Silhouette (1px)</option>
+              <option value="top-only">Top-Only (Walls)</option>
+              <option value="none">None (Floors)</option>
+            </select>
+          </label>
           <label>Emissive View
             <select id="emissive-select">
               <option value="main">Main (Baked Glow)</option>
@@ -63,6 +74,7 @@
           </div>
           <div class="row">
             <button id="btn-sandbox-play">▶ Animate</button>
+            <button id="btn-sandbox-load">Load Room</button>
             <button id="btn-sandbox-save">Save Room</button>
           </div>
           <label>Room File

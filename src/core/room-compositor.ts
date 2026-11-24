@@ -204,6 +204,7 @@ export function renderRoom(
   const wallEvents: Array<{
     tx: number;
     ty: number;
+    depthKey: number;
     isDecor: boolean;
     sprite: RenderResult;
     worldX: number;
@@ -214,19 +215,19 @@ export function renderRoom(
     const dir = edgeToDirection(w.edge);
     const sprite = getSprite(w.assetId, dir);
     const [wx, wy] = toWorldAnchor(w.tx, w.ty, sprite.footprintTiles[0], sprite.footprintTiles[1]);
-    wallEvents.push({ tx: w.tx, ty: w.ty, isDecor: false, sprite, worldX: wx, worldY: wy });
+    const dk = w.tx + sprite.footprintTiles[0] - 1 + w.ty + sprite.footprintTiles[1] - 1;
+    wallEvents.push({ tx: w.tx, ty: w.ty, depthKey: dk, isDecor: false, sprite, worldX: wx, worldY: wy });
   }
   for (const d of room.wallDecor) {
     const dir = edgeToDirection(d.edge);
     const sprite = getSprite(d.assetId, dir);
     const [wx, wy] = toWorldAnchor(d.tx, d.ty, sprite.footprintTiles[0], sprite.footprintTiles[1]);
-    wallEvents.push({ tx: d.tx, ty: d.ty, isDecor: true, sprite, worldX: wx, worldY: wy });
+    const dk = d.tx + sprite.footprintTiles[0] - 1 + d.ty + sprite.footprintTiles[1] - 1;
+    wallEvents.push({ tx: d.tx, ty: d.ty, depthKey: dk, isDecor: true, sprite, worldX: wx, worldY: wy });
   }
   wallEvents.sort((a, b) => {
+    if (a.depthKey !== b.depthKey) return a.depthKey - b.depthKey;
     if (a.isDecor !== b.isDecor) return a.isDecor ? 1 : -1;
-    const da = a.tx + a.ty;
-    const db = b.tx + b.ty;
-    if (da !== db) return da - db;
     return a.tx - b.tx;
   });
   for (const we of wallEvents) {
@@ -293,8 +294,27 @@ export function renderRoom(
     const dx = dc.worldX - dc.sprite.anchor.x - minX + margin;
     const dy = dc.worldY - dc.sprite.anchor.y - minY + margin;
     alphaComposite(dc.sprite.main, main, dx, dy);
-    if (emissive && dc.sprite.emissive) {
-      alphaComposite(dc.sprite.emissive, emissive, dx, dy);
+    if (emissive) {
+      // Mask out occluded background emissive pixels behind fully opaque foreground pixels
+      for (let sy = 0; sy < dc.sprite.main.height; sy++) {
+        const ty = dy + sy;
+        if (ty < 0 || ty >= emissive.height) continue;
+        for (let sx = 0; sx < dc.sprite.main.width; sx++) {
+          const tx = dx + sx;
+          if (tx < 0 || tx >= emissive.width) continue;
+          const sa = dc.sprite.main.data[(sy * dc.sprite.main.width + sx) * 4 + 3];
+          if (sa === 255) {
+            const di = (ty * emissive.width + tx) * 4;
+            emissive.data[di] = 0;
+            emissive.data[di + 1] = 0;
+            emissive.data[di + 2] = 0;
+            emissive.data[di + 3] = 0;
+          }
+        }
+      }
+      if (dc.sprite.emissive) {
+        alphaComposite(dc.sprite.emissive, emissive, dx, dy);
+      }
     }
   }
 

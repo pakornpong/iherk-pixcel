@@ -10,7 +10,7 @@ import { encodeAnimatedGIF } from "../core/exporters/gif.js";
 import { exportObjMtl } from "../core/exporters/obj.js";
 import { createRGBAImage, decodePNG, encodePNG, type RGBAImage } from "../core/exporters/png.js";
 import { exportSpriteStack } from "../core/exporters/sprite-stack.js";
-import { listBuiltinPalettes, loadPalette } from "../core/palette.js";
+import { listBuiltinPalettes } from "../core/palette.js";
 import { renderAssetFrame } from "../core/postprocess.js";
 import { renderRoom } from "../core/room-compositor.js";
 import {
@@ -26,6 +26,7 @@ import {
   listAssetFiles,
   loadAllAssetsMap,
   loadAssetByIdOrPath,
+  loadWorkspaceSafePalette,
   resolveSafeWorkspacePath,
 } from "../core/workspace.js";
 
@@ -91,10 +92,7 @@ export function createPixcelMcpServer(rootDir: string): McpServer {
     { name: z.string().min(1) },
     async ({ name }) => {
       try {
-        if (name.includes("..") || path.isAbsolute(name)) {
-          resolveSafeWorkspacePath(absRoot, name);
-        }
-        const pal = await loadPalette(name, paletteDirs);
+        const pal = await loadWorkspaceSafePalette(absRoot, name);
         return { content: [{ type: "text", text: JSON.stringify(pal, null, 2) }] };
       } catch (err) {
         return errResult(err);
@@ -205,7 +203,7 @@ export function createPixcelMcpServer(rootDir: string): McpServer {
           left: await loadView(args.left),
           bottom: await loadView(args.bottom),
         };
-        const pal = await loadPalette(args.palette, paletteDirs);
+        const pal = await loadWorkspaceSafePalette(absRoot, args.palette);
         const asset = carveFromOrthographicViews(views, {
           id: args.id,
           palette: pal,
@@ -249,7 +247,7 @@ export function createPixcelMcpServer(rootDir: string): McpServer {
     async ({ id, directions, format, emissiveMode, outDir, includePreviewImage }) => {
       try {
         const { asset } = await loadAssetByIdOrPath(absRoot, id);
-        const pal = await loadPalette(asset.palette, paletteDirs);
+        const pal = await loadWorkspaceSafePalette(absRoot, asset.palette);
         const { frames } = compileAsset(asset);
         const targetDir = resolveSafeWorkspacePath(absRoot, outDir ?? path.join("out", asset.id));
         await fs.mkdir(targetDir, { recursive: true });
@@ -371,7 +369,7 @@ export function createPixcelMcpServer(rootDir: string): McpServer {
           rawRoom = JSON.parse(await fs.readFile(resolvedRoomPath, "utf8"));
         }
         const room = RoomLayoutSchema.parse(rawRoom);
-        const pal = await loadPalette(room.palette, paletteDirs);
+        const pal = await loadWorkspaceSafePalette(absRoot, room.palette);
         const assetsMap = await loadAllAssetsMap(absRoot);
         const rendered = renderRoom(room, assetsMap, pal, { frameIndex, emissiveMode });
 
@@ -379,11 +377,28 @@ export function createPixcelMcpServer(rootDir: string): McpServer {
         await fs.mkdir(path.dirname(targetOut), { recursive: true });
         const pngBuf = encodePNG(rendered.main);
         await fs.writeFile(targetOut, pngBuf);
+        let emissiveOutPath: string | undefined;
+        if (rendered.emissive) {
+          emissiveOutPath = targetOut.endsWith(".png")
+            ? targetOut.replace(/\.png$/i, "_emissive.png")
+            : `${targetOut}_emissive.png`;
+          await fs.writeFile(emissiveOutPath, encodePNG(rendered.emissive));
+        }
 
         const content: Array<{ type: "text"; text: string } | { type: "image"; data: string; mimeType: string }> = [
           {
             type: "text",
-            text: JSON.stringify({ roomId: room.id, outPath: targetOut, width: rendered.width, height: rendered.height }, null, 2),
+            text: JSON.stringify(
+              {
+                roomId: room.id,
+                outPath: targetOut,
+                ...(emissiveOutPath ? { emissiveOutPath } : {}),
+                width: rendered.width,
+                height: rendered.height,
+              },
+              null,
+              2,
+            ),
           },
         ];
         if (includePreviewImage) {
@@ -414,7 +429,7 @@ export function createPixcelMcpServer(rootDir: string): McpServer {
         for (const id of assetIds) {
           const { asset } = await loadAssetByIdOrPath(absRoot, id);
           tilePreset = asset.tilePreset;
-          const pal = await loadPalette(asset.palette, paletteDirs);
+          const pal = await loadWorkspaceSafePalette(absRoot, asset.palette);
           const { frames } = compileAsset(asset);
           for (const dir of directions as Direction[]) {
             for (const f of frames) {

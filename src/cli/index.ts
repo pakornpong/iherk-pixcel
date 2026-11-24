@@ -185,12 +185,19 @@ async function main(): Promise<void> {
         bottom: await readPng(values.bottom),
       };
       const pal = await loadPalette(values.palette ?? "office-night", paletteDirs);
-      const vpt = Number(values.vpt) === 16 ? 16 : 32;
+      const parsedDepth = Number(values.depth ?? "4");
+      if (!Number.isInteger(parsedDepth) || parsedDepth < 1 || parsedDepth > 512) {
+        throw new Error(`Invalid --depth "${values.depth}": expected an integer between 1 and 512`);
+      }
+      const parsedVpt = Number(values.vpt ?? "32");
+      if (parsedVpt !== 16 && parsedVpt !== 32) {
+        throw new Error(`Invalid --vpt "${values.vpt}": expected 16 or 32`);
+      }
       const asset = carveFromOrthographicViews(views, {
         id: values.id,
         palette: pal,
-        depth: Number(values.depth ?? 4),
-        voxelsPerTile: vpt,
+        depth: parsedDepth,
+        voxelsPerTile: parsedVpt,
       });
       const outFile = path.resolve(cwd, values.out);
       await fs.mkdir(path.dirname(outFile), { recursive: true });
@@ -293,6 +300,12 @@ async function main(): Promise<void> {
       const outFile = path.resolve(cwd, values.out ?? "out/room.png");
       await fs.mkdir(path.dirname(outFile), { recursive: true });
       await fs.writeFile(outFile, encodePNG(rendered.main));
+      if (rendered.emissive) {
+        const emissiveFile = outFile.endsWith(".png")
+          ? outFile.replace(/\.png$/i, "_emissive.png")
+          : `${outFile}_emissive.png`;
+        await fs.writeFile(emissiveFile, encodePNG(rendered.emissive));
+      }
       console.log(`Rendered room "${room.id}" (${rendered.width}x${rendered.height}) -> ${outFile}`);
       break;
     }

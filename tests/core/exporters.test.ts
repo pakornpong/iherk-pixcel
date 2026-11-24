@@ -71,5 +71,35 @@ describe("exporters", () => {
     expect(obj).toContain("mtllib server-mini.mtl");
     expect(obj).toContain("usemtl body");
     expect(mtl).toContain("newmtl led");
+
+    // Verify every exported quad's geometric normal matches its referenced vn (dot > 0)
+    const verts: Array<[number, number, number]> = [];
+    const norms: Array<[number, number, number]> = [];
+    let faceCount = 0;
+    for (const line of obj.split("\n")) {
+      if (line.startsWith("v ")) {
+        const [, x, y, z] = line.split(" ").map(Number);
+        verts.push([x, y, z]);
+      } else if (line.startsWith("vn ")) {
+        const [, nx, ny, nz] = line.split(" ").map(Number);
+        norms.push([nx, ny, nz]);
+      } else if (line.startsWith("f ")) {
+        faceCount++;
+        const toks = line.slice(2).trim().split(" ");
+        const [v0i, vn0] = toks[0].split("//").map(Number);
+        const [v1i] = toks[1].split("//").map(Number);
+        const [v2i] = toks[2].split("//").map(Number);
+        const v0 = verts[v0i - 1];
+        const v1 = verts[v1i - 1];
+        const v2 = verts[v2i - 1];
+        const e1 = [v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2]];
+        const e2 = [v2[0] - v0[0], v2[1] - v0[1], v2[2] - v0[2]];
+        const cross = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
+        const n = norms[vn0 - 1];
+        const dot = cross[0] * n[0] + cross[1] * n[1] + cross[2] * n[2];
+        expect(dot).toBeGreaterThan(0);
+      }
+    }
+    expect(faceCount).toBeGreaterThan(0);
   });
 });

@@ -62,4 +62,41 @@ describe("VoxelGrid and DSL compiler", () => {
     });
     expect(() => compileAsset(asset)).toThrow(/missing_mat/);
   });
+
+  it("rejects negative coords from mirror/decal/cylinder/partTransforms and rejects out-of-bounds coords > 512", () => {
+    const negMirror = PixcelAssetSchema.parse({
+      schemaVersion: 1,
+      id: "neg-mirror",
+      materials: { a: { color: "#112233", kind: "matte" } },
+      ops: [{ op: "mirror", axis: "x", pivot: 1, ops: [{ op: "voxel", at: [5, 0, 0], material: "a" }] }],
+    });
+    expect(() => compileAsset(negMirror)).toThrow(/negative|bounds/i);
+
+    const negDecal = PixcelAssetSchema.parse({
+      schemaVersion: 1,
+      id: "neg-decal",
+      materials: { a: { color: "#112233", kind: "matte" } },
+      ops: [],
+      decals: [{ face: "+X", origin: [0, 0, 0], legend: { x: "a" }, rows: ["x", "x"] }],
+    });
+    expect(() => compileAsset(negDecal)).toThrow(/negative|bounds/i);
+
+    const negTransform = PixcelAssetSchema.parse({
+      schemaVersion: 1,
+      id: "neg-tf",
+      materials: { a: { color: "#112233", kind: "matte" } },
+      ops: [{ op: "voxel", at: [0, 0, 0], material: "a", part: "p" }],
+      frames: [{ name: "f0", durationMs: 100, ops: [], partTransforms: { p: { translate: [-2, 0, 0] } } }],
+    });
+    expect(() => compileAsset(negTransform)).toThrow(/negative|bounds/i);
+
+    expect(() =>
+      PixcelAssetSchema.parse({
+        schemaVersion: 1,
+        id: "huge-coord",
+        materials: { a: { color: "#112233", kind: "matte" } },
+        ops: [{ op: "box", from: [0, 0, 0], to: [10000, 10, 10], material: "a" }],
+      }),
+    ).toThrow();
+  });
 });

@@ -86,7 +86,8 @@ export function exportObjMtl(
         facesByMaterial.set(cell.material, list);
       }
       const vn = fi + 1;
-      list.push(`f ${vIds[0]}//${vn} ${vIds[1]}//${vn} ${vIds[2]}//${vn} ${vIds[3]}//${vn}`);
+      // Reverse winding because voxel (x, y, z-up) -> OBJ (x, z, y) is an odd permutation
+      list.push(`f ${vIds[0]}//${vn} ${vIds[3]}//${vn} ${vIds[2]}//${vn} ${vIds[1]}//${vn}`);
     }
   }
 

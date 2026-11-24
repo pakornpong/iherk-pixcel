@@ -141,7 +141,11 @@ function greedyBoxMerge(grid: VoxelGrid, dimX: number, dimY: number, dimZ: numbe
 }
 
 export function carveFromOrthographicViews(views: OrthographicViews, opts: CarveOptions): PixcelAsset {
-  const depth = Math.max(1, Math.trunc(opts.depth ?? 4));
+  const rawDepth = opts.depth ?? 4;
+  if (!Number.isFinite(rawDepth) || !Number.isInteger(rawDepth) || rawDepth < 1 || rawDepth > 512) {
+    throw new Error(`Invalid carve depth "${rawDepth}": expected an integer between 1 and 512`);
+  }
+  const depth = rawDepth;
   const alphaThreshold = opts.alphaThreshold ?? 128;
   const voxelsPerTile = opts.voxelsPerTile ?? 32;
   const tilePreset = opts.tilePreset ?? "64x32";

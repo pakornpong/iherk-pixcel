@@ -21,7 +21,11 @@ describe("local web preview server", () => {
 
     const htmlRes = await fetch(srv.url);
     expect(htmlRes.status).toBe(200);
-    expect(await htmlRes.text()).toContain("iherk-pixcel");
+    const htmlText = await htmlRes.text();
+    expect(htmlText).toContain("iherk-pixcel");
+    expect(htmlText).toContain("outline-select");
+    expect(htmlText).toContain("frame-range");
+    expect(htmlText).toContain("btn-sandbox-load");
 
     const listRes = await fetch(`${srv.url}/api/assets`);
     expect(listRes.status).toBe(200);
@@ -37,6 +41,28 @@ describe("local web preview server", () => {
 
     const badRes = await fetch(`${srv.url}/api/render/..%2F..%2Fsecret`);
     expect(badRes.status).toBe(400);
+
+    const badUri = await fetch(`${srv.url}/api/render/%E0%A4%A`);
+    expect(badUri.status).toBe(400);
+
+    const badJson = await fetch(`${srv.url}/api/room`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{not-json",
+    });
+    expect(badJson.status).toBe(400);
+
+    const badRoomPal = await fetch(`${srv.url}/api/room/render`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        room: {
+          schemaVersion: 1, id: "evil", tilePreset: "64x32", palette: "../../package.json",
+          widthTiles: 2, depthTiles: 2, floors: [], walls: [], wallDecor: [], objects: [],
+        },
+      }),
+    });
+    expect(badRoomPal.status).toBe(400);
 
     const saveRes = await fetch(`${srv.url}/api/room`, {
       method: "POST",
