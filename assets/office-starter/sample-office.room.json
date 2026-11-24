@@ -87,10 +87,17 @@
     { "assetId": "desk-dev-dual", "tx": 1, "ty": 2, "direction": "ne" },
     { "assetId": "chair-office-swivel", "tx": 2, "ty": 2, "direction": "sw" },
     { "assetId": "table-conference", "tx": 4, "ty": 2, "direction": "se" },
-    { "assetId": "chair-office-swivel", "tx": 3, "ty": 2, "direction": "se" },
-    { "assetId": "chair-office-swivel", "tx": 4, "ty": 4, "direction": "ne" },
-    { "assetId": "chair-office-swivel", "tx": 5, "ty": 4, "direction": "ne" },
+    { "assetId": "chair-office-swivel", "tx": 3, "ty": 2, "direction": "ne" },
+    { "assetId": "chair-office-swivel", "tx": 4, "ty": 4, "direction": "nw" },
+    { "assetId": "chair-office-swivel", "tx": 5, "ty": 4, "direction": "nw" },
     { "assetId": "desk-security-ops", "tx": 3, "ty": 5, "direction": "se" },
-    { "assetId": "chair-office-swivel", "tx": 4, "ty": 6, "direction": "ne" }
+    { "assetId": "chair-office-swivel", "tx": 4, "ty": 6, "direction": "nw" }
+  ],
+  "characters": [
+    { "assetId": "agent-operator", "tx": 1, "ty": 1, "direction": "nw", "animation": "inspect", "roleLabel": "OPERATOR" },
+    { "assetId": "agent-dev", "tx": 2, "ty": 2, "direction": "sw", "animation": "sit_type", "roleLabel": "DEV AGENT" },
+    { "assetId": "agent-pm", "tx": 4, "ty": 1, "direction": "se", "animation": "inspect", "roleLabel": "PROJECT MANAGER" },
+    { "assetId": "agent-automation", "tx": 3, "ty": 2, "direction": "ne", "animation": "sit_type", "roleLabel": "AUTOMATION AGENT" },
+    { "assetId": "agent-security", "tx": 4, "ty": 6, "direction": "nw", "animation": "sit_type", "roleLabel": "SECURITY AGENT" }
   ]
 }

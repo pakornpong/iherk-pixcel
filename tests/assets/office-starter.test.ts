@@ -6,6 +6,7 @@ import { loadPalette } from "../../src/core/palette.js";
 import { compileAsset } from "../../src/core/dsl-compiler.js";
 import { renderAssetFrame } from "../../src/core/postprocess.js";
 import { renderRoom } from "../../src/core/room-compositor.js";
+import { loadAllAssetsMap } from "../../src/core/workspace.js";
 
 const EXPECTED_ASSETS = [
   "floor-wood-plank",
@@ -45,7 +46,8 @@ describe("AI Agent Office starter pack", () => {
 
     const roomRaw = JSON.parse(await fs.readFile(path.join(dir, "sample-office.room.json"), "utf8"));
     const room = RoomLayoutSchema.parse(roomRaw);
-    const renderedRoom = renderRoom(room, assetsMap, palette, { emissiveMode: "baked" });
+    const allAssets = await loadAllAssetsMap(process.cwd());
+    const renderedRoom = renderRoom(room, allAssets, palette, { emissiveMode: "baked" });
     expect(renderedRoom.width).toBeGreaterThan(300);
     expect(renderedRoom.height).toBeGreaterThan(200);
   });

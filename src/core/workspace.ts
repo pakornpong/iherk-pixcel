@@ -6,6 +6,7 @@ import { PixcelAssetSchema, SafeIdSchema, type PaletteDefinition, type PixcelAss
 
 export const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 export const BUILTIN_ASSETS_DIR = path.join(PACKAGE_ROOT, "assets", "office-starter");
+export const BUILTIN_CHARACTERS_DIR = path.join(PACKAGE_ROOT, "assets", "characters");
 export const BUILTIN_PALETTES_DIR = path.join(PACKAGE_ROOT, "assets", "palettes");
 
 export async function loadWorkspaceSafePalette(rootDir: string, nameOrPath: string): Promise<PaletteDefinition> {
@@ -59,8 +60,9 @@ async function scanPixcelFiles(dir: string, out: Map<string, string>, overwrite:
 
 export async function listAssetFiles(rootDir: string): Promise<Array<{ id: string; path: string }>> {
   const found = new Map<string, string>();
-  // Built-in starter pack first, then workspace assets override
+  // Built-in starter pack & starter characters first, then workspace assets override
   await scanPixcelFiles(BUILTIN_ASSETS_DIR, found, true);
+  await scanPixcelFiles(BUILTIN_CHARACTERS_DIR, found, true);
   await scanPixcelFiles(path.join(path.resolve(rootDir), "assets"), found, true);
   return [...found.entries()]
     .map(([id, filePath]) => ({ id, path: filePath }))

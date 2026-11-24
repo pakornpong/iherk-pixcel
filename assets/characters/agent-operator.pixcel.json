@@ -1,0 +1,1196 @@
+{
+  "schemaVersion": 1,
+  "id": "agent-operator",
+  "category": "character",
+  "layer": "object",
+  "outlineMode": "silhouette",
+  "tilePreset": "64x32",
+  "voxelsPerTile": 32,
+  "footprintTiles": [
+    1,
+    1
+  ],
+  "palette": "office-night",
+  "materials": {
+    "skin": {
+      "color": "#c68b59",
+      "kind": "matte"
+    },
+    "hair": {
+      "color": "#1c1816",
+      "kind": "matte"
+    },
+    "eye": {
+      "color": "#141821",
+      "kind": "matte"
+    },
+    "outfit": {
+      "color": "#181f2c",
+      "kind": "matte"
+    },
+    "outfit_inner": {
+      "color": "#e6e9ef",
+      "kind": "matte"
+    },
+    "accent": {
+      "color": "#22c55e",
+      "kind": "emissive",
+      "glowRadius": 1,
+      "glowIntensity": 0.35
+    },
+    "pants": {
+      "color": "#131722",
+      "kind": "matte"
+    },
+    "shoe": {
+      "color": "#141821",
+      "kind": "matte"
+    },
+    "glasses_frame": {
+      "color": "#171c26",
+      "kind": "metal"
+    },
+    "glasses_lens": {
+      "color": "#38bdf8",
+      "kind": "glass"
+    },
+    "headset_body": {
+      "color": "#1f2430",
+      "kind": "metal"
+    },
+    "headset_led": {
+      "color": "#38bdf8",
+      "kind": "emissive",
+      "glowRadius": 1,
+      "glowIntensity": 0.35
+    }
+  },
+  "parts": {
+    "torso": {
+      "pivot": [
+        15,
+        15,
+        12
+      ]
+    },
+    "head": {
+      "pivot": [
+        15,
+        15,
+        20
+      ],
+      "parent": "torso"
+    },
+    "arm_l": {
+      "pivot": [
+        10,
+        15,
+        15
+      ],
+      "parent": "torso"
+    },
+    "arm_r": {
+      "pivot": [
+        21,
+        15,
+        15
+      ],
+      "parent": "torso"
+    },
+    "leg_l": {
+      "pivot": [
+        13,
+        15,
+        7
+      ]
+    },
+    "leg_r": {
+      "pivot": [
+        18,
+        15,
+        7
+      ]
+    }
+  },
+  "ops": [
+    {
+      "op": "box",
+      "from": [
+        12,
+        14,
+        0
+      ],
+      "to": [
+        14,
+        18,
+        2
+      ],
+      "material": "shoe",
+      "part": "leg_l"
+    },
+    {
+      "op": "box",
+      "from": [
+        12,
+        14,
+        3
+      ],
+      "to": [
+        14,
+        17,
+        7
+      ],
+      "material": "pants",
+      "part": "leg_l"
+    },
+    {
+      "op": "box",
+      "from": [
+        17,
+        14,
+        0
+      ],
+      "to": [
+        19,
+        18,
+        2
+      ],
+      "material": "shoe",
+      "part": "leg_r"
+    },
+    {
+      "op": "box",
+      "from": [
+        17,
+        14,
+        3
+      ],
+      "to": [
+        19,
+        17,
+        7
+      ],
+      "material": "pants",
+      "part": "leg_r"
+    },
+    {
+      "op": "box",
+      "from": [
+        11,
+        13,
+        8
+      ],
+      "to": [
+        20,
+        18,
+        16
+      ],
+      "material": "outfit",
+      "part": "torso"
+    },
+    {
+      "op": "box",
+      "from": [
+        12,
+        12,
+        15
+      ],
+      "to": [
+        19,
+        13,
+        17
+      ],
+      "material": "outfit",
+      "part": "torso"
+    },
+    {
+      "op": "box",
+      "from": [
+        14,
+        18,
+        12
+      ],
+      "to": [
+        17,
+        18,
+        14
+      ],
+      "material": "accent",
+      "part": "torso"
+    },
+    {
+      "op": "box",
+      "from": [
+        14,
+        13,
+        11
+      ],
+      "to": [
+        17,
+        13,
+        14
+      ],
+      "material": "accent",
+      "part": "torso"
+    },
+    {
+      "op": "box",
+      "from": [
+        9,
+        14,
+        14
+      ],
+      "to": [
+        10,
+        17,
+        16
+      ],
+      "material": "outfit",
+      "part": "arm_l"
+    },
+    {
+      "op": "box",
+      "from": [
+        9,
+        14,
+        11
+      ],
+      "to": [
+        10,
+        17,
+        13
+      ],
+      "material": "outfit",
+      "part": "arm_l"
+    },
+    {
+      "op": "box",
+      "from": [
+        9,
+        14,
+        9
+      ],
+      "to": [
+        10,
+        17,
+        10
+      ],
+      "material": "skin",
+      "part": "arm_l"
+    },
+    {
+      "op": "box",
+      "from": [
+        21,
+        14,
+        14
+      ],
+      "to": [
+        22,
+        17,
+        16
+      ],
+      "material": "outfit",
+      "part": "arm_r"
+    },
+    {
+      "op": "box",
+      "from": [
+        21,
+        14,
+        11
+      ],
+      "to": [
+        22,
+        17,
+        13
+      ],
+      "material": "outfit",
+      "part": "arm_r"
+    },
+    {
+      "op": "box",
+      "from": [
+        21,
+        14,
+        9
+      ],
+      "to": [
+        22,
+        17,
+        10
+      ],
+      "material": "skin",
+      "part": "arm_r"
+    },
+    {
+      "op": "box",
+      "from": [
+        11,
+        11,
+        17
+      ],
+      "to": [
+        20,
+        20,
+        25
+      ],
+      "material": "skin",
+      "part": "head"
+    },
+    {
+      "op": "box",
+      "from": [
+        10,
+        15,
+        20
+      ],
+      "to": [
+        10,
+        16,
+        21
+      ],
+      "material": "skin",
+      "part": "head"
+    },
+    {
+      "op": "box",
+      "from": [
+        21,
+        15,
+        20
+      ],
+      "to": [
+        21,
+        16,
+        21
+      ],
+      "material": "skin",
+      "part": "head"
+    },
+    {
+      "op": "box",
+      "from": [
+        10,
+        10,
+        17
+      ],
+      "to": [
+        21,
+        20,
+        27
+      ],
+      "material": "outfit",
+      "part": "head"
+    },
+    {
+      "op": "box",
+      "from": [
+        12,
+        19,
+        18
+      ],
+      "to": [
+        19,
+        20,
+        24
+      ],
+      "material": "skin",
+      "part": "head"
+    },
+    {
+      "op": "box",
+      "from": [
+        12,
+        19,
+        24
+      ],
+      "to": [
+        19,
+        20,
+        25
+      ],
+      "material": "hair",
+      "part": "head"
+    },
+    {
+      "op": "box",
+      "from": [
+        13,
+        20,
+        20
+      ],
+      "to": [
+        13,
+        20,
+        21
+      ],
+      "material": "eye",
+      "part": "head"
+    },
+    {
+      "op": "box",
+      "from": [
+        18,
+        20,
+        20
+      ],
+      "to": [
+        18,
+        20,
+        21
+      ],
+      "material": "eye",
+      "part": "head"
+    },
+    {
+      "op": "box",
+      "from": [
+        10,
+        15,
+        26
+      ],
+      "to": [
+        21,
+        16,
+        27
+      ],
+      "material": "headset_body",
+      "part": "head"
+    },
+    {
+      "op": "box",
+      "from": [
+        9,
+        14,
+        19
+      ],
+      "to": [
+        10,
+        17,
+        23
+      ],
+      "material": "headset_body",
+      "part": "head"
+    },
+    {
+      "op": "box",
+      "from": [
+        21,
+        14,
+        19
+      ],
+      "to": [
+        22,
+        17,
+        23
+      ],
+      "material": "headset_body",
+      "part": "head"
+    },
+    {
+      "op": "box",
+      "from": [
+        21,
+        17,
+        19
+      ],
+      "to": [
+        21,
+        21,
+        19
+      ],
+      "material": "headset_body",
+      "part": "head"
+    },
+    {
+      "op": "voxel",
+      "at": [
+        20,
+        21,
+        19
+      ],
+      "material": "headset_led",
+      "part": "head"
+    }
+  ],
+  "decals": [],
+  "animations": {
+    "idle": {
+      "loop": true,
+      "frames": [
+        {
+          "name": "idle_0",
+          "durationMs": 650,
+          "ops": [],
+          "decals": []
+        },
+        {
+          "name": "idle_1",
+          "durationMs": 650,
+          "ops": [],
+          "decals": [],
+          "partTransforms": {
+            "torso": {
+              "translate": [
+                0,
+                0,
+                1
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "walk": {
+      "loop": true,
+      "frames": [
+        {
+          "name": "walk_0",
+          "durationMs": 180,
+          "ops": [],
+          "decals": [],
+          "partTransforms": {
+            "torso": {
+              "translate": [
+                0,
+                0,
+                1
+              ]
+            },
+            "leg_l": {
+              "translate": [
+                0,
+                2,
+                0
+              ]
+            },
+            "leg_r": {
+              "translate": [
+                0,
+                -2,
+                0
+              ]
+            },
+            "arm_l": {
+              "translate": [
+                0,
+                -2,
+                0
+              ]
+            },
+            "arm_r": {
+              "translate": [
+                0,
+                2,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "name": "walk_1",
+          "durationMs": 180,
+          "ops": [],
+          "decals": []
+        },
+        {
+          "name": "walk_2",
+          "durationMs": 180,
+          "ops": [],
+          "decals": [],
+          "partTransforms": {
+            "torso": {
+              "translate": [
+                0,
+                0,
+                1
+              ]
+            },
+            "leg_l": {
+              "translate": [
+                0,
+                -2,
+                0
+              ]
+            },
+            "leg_r": {
+              "translate": [
+                0,
+                2,
+                0
+              ]
+            },
+            "arm_l": {
+              "translate": [
+                0,
+                2,
+                0
+              ]
+            },
+            "arm_r": {
+              "translate": [
+                0,
+                -2,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "name": "walk_3",
+          "durationMs": 180,
+          "ops": [],
+          "decals": []
+        }
+      ]
+    },
+    "sit_type": {
+      "loop": true,
+      "frames": [
+        {
+          "name": "sit_type_0",
+          "durationMs": 240,
+          "ops": [
+            {
+              "op": "box",
+              "from": [
+                12,
+                16,
+                11
+              ],
+              "to": [
+                14,
+                22,
+                13
+              ],
+              "material": "pants",
+              "part": "leg_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                17,
+                16,
+                11
+              ],
+              "to": [
+                19,
+                22,
+                13
+              ],
+              "material": "pants",
+              "part": "leg_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                12,
+                21,
+                7
+              ],
+              "to": [
+                14,
+                23,
+                11
+              ],
+              "material": "pants",
+              "part": "leg_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                17,
+                21,
+                7
+              ],
+              "to": [
+                19,
+                23,
+                11
+              ],
+              "material": "pants",
+              "part": "leg_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                12,
+                21,
+                5
+              ],
+              "to": [
+                14,
+                24,
+                6
+              ],
+              "material": "shoe",
+              "part": "leg_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                17,
+                21,
+                5
+              ],
+              "to": [
+                19,
+                24,
+                6
+              ],
+              "material": "shoe",
+              "part": "leg_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                9,
+                15,
+                16
+              ],
+              "to": [
+                10,
+                19,
+                18
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                10,
+                19,
+                16
+              ],
+              "to": [
+                12,
+                23,
+                17
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                23,
+                16
+              ],
+              "to": [
+                13,
+                25,
+                17
+              ],
+              "material": "skin",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                21,
+                15,
+                16
+              ],
+              "to": [
+                22,
+                19,
+                18
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                19,
+                15
+              ],
+              "to": [
+                21,
+                23,
+                16
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                18,
+                23,
+                15
+              ],
+              "to": [
+                20,
+                25,
+                16
+              ],
+              "material": "skin",
+              "part": "arm_r"
+            }
+          ],
+          "decals": [],
+          "partTransforms": {
+            "torso": {
+              "translate": [
+                0,
+                -1,
+                3
+              ]
+            },
+            "leg_l": {
+              "hide": true
+            },
+            "leg_r": {
+              "hide": true
+            },
+            "arm_l": {
+              "hide": true
+            },
+            "arm_r": {
+              "hide": true
+            }
+          }
+        },
+        {
+          "name": "sit_type_1",
+          "durationMs": 240,
+          "ops": [
+            {
+              "op": "box",
+              "from": [
+                12,
+                16,
+                11
+              ],
+              "to": [
+                14,
+                22,
+                13
+              ],
+              "material": "pants",
+              "part": "leg_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                17,
+                16,
+                11
+              ],
+              "to": [
+                19,
+                22,
+                13
+              ],
+              "material": "pants",
+              "part": "leg_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                12,
+                21,
+                7
+              ],
+              "to": [
+                14,
+                23,
+                11
+              ],
+              "material": "pants",
+              "part": "leg_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                17,
+                21,
+                7
+              ],
+              "to": [
+                19,
+                23,
+                11
+              ],
+              "material": "pants",
+              "part": "leg_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                12,
+                21,
+                5
+              ],
+              "to": [
+                14,
+                24,
+                6
+              ],
+              "material": "shoe",
+              "part": "leg_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                17,
+                21,
+                5
+              ],
+              "to": [
+                19,
+                24,
+                6
+              ],
+              "material": "shoe",
+              "part": "leg_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                9,
+                15,
+                16
+              ],
+              "to": [
+                10,
+                19,
+                18
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                10,
+                19,
+                15
+              ],
+              "to": [
+                12,
+                23,
+                16
+              ],
+              "material": "outfit",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                11,
+                23,
+                15
+              ],
+              "to": [
+                13,
+                25,
+                16
+              ],
+              "material": "skin",
+              "part": "arm_l"
+            },
+            {
+              "op": "box",
+              "from": [
+                21,
+                15,
+                16
+              ],
+              "to": [
+                22,
+                19,
+                18
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                19,
+                19,
+                16
+              ],
+              "to": [
+                21,
+                23,
+                17
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                18,
+                23,
+                16
+              ],
+              "to": [
+                20,
+                25,
+                17
+              ],
+              "material": "skin",
+              "part": "arm_r"
+            }
+          ],
+          "decals": [],
+          "partTransforms": {
+            "torso": {
+              "translate": [
+                0,
+                -1,
+                3
+              ]
+            },
+            "leg_l": {
+              "hide": true
+            },
+            "leg_r": {
+              "hide": true
+            },
+            "arm_l": {
+              "hide": true
+            },
+            "arm_r": {
+              "hide": true
+            }
+          }
+        }
+      ]
+    },
+    "inspect": {
+      "loop": true,
+      "frames": [
+        {
+          "name": "inspect_0",
+          "durationMs": 480,
+          "ops": [
+            {
+              "op": "box",
+              "from": [
+                21,
+                15,
+                14
+              ],
+              "to": [
+                22,
+                19,
+                16
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                20,
+                19,
+                16
+              ],
+              "to": [
+                22,
+                23,
+                17
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                20,
+                23,
+                16
+              ],
+              "to": [
+                21,
+                25,
+                17
+              ],
+              "material": "skin",
+              "part": "arm_r"
+            }
+          ],
+          "decals": [],
+          "partTransforms": {
+            "arm_r": {
+              "hide": true
+            }
+          }
+        },
+        {
+          "name": "inspect_1",
+          "durationMs": 480,
+          "ops": [
+            {
+              "op": "box",
+              "from": [
+                21,
+                15,
+                14
+              ],
+              "to": [
+                22,
+                19,
+                16
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                20,
+                19,
+                18
+              ],
+              "to": [
+                22,
+                23,
+                19
+              ],
+              "material": "outfit",
+              "part": "arm_r"
+            },
+            {
+              "op": "box",
+              "from": [
+                20,
+                23,
+                18
+              ],
+              "to": [
+                21,
+                25,
+                19
+              ],
+              "material": "skin",
+              "part": "arm_r"
+            }
+          ],
+          "decals": [],
+          "partTransforms": {
+            "torso": {
+              "translate": [
+                0,
+                0,
+                1
+              ]
+            },
+            "arm_r": {
+              "hide": true
+            }
+          }
+        }
+      ]
+    }
+  }
+}

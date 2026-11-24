@@ -1,4 +1,4 @@
-import { compileAsset, type CompiledFrame } from "./dsl-compiler.js";
+import { compileAssetAnimations, type CompiledFrame } from "./dsl-compiler.js";
 import { createRGBAImage, type RGBAImage } from "./exporters/png.js";
 import { parseHexColor } from "./palette.js";
 import { renderAssetFrame, type RenderResult } from "./postprocess.js";
@@ -11,6 +11,7 @@ export interface RoomRenderItem {
   ty: number;
   footprintX: number;
   footprintY: number;
+  tieOrder?: number;
 }
 
 function isoScreenXRange(item: RoomRenderItem): [number, number] {
@@ -68,7 +69,9 @@ export function sortIsometricObjects<T extends RoomRenderItem>(items: T[]): T[] 
     if (dk !== 0) return dk;
     if (a.tx !== b.tx) return a.tx - b.tx;
     if (a.ty !== b.ty) return a.ty - b.ty;
-    return a.id.localeCompare(b.id);
+    const to = (a.tieOrder ?? 0) - (b.tieOrder ?? 0);
+    if (to !== 0) return to;
+    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
   };
 
   const emitted = new Uint8Array(n);
@@ -152,11 +155,12 @@ export function renderRoom(
   const emissiveMode: EmissiveMode = opts?.emissiveMode ?? "baked";
   const metrics = getTileMetrics(room.tilePreset);
 
-  const compiledCache = new Map<string, CompiledFrame[]>();
+  const compiledCache = new Map<string, Map<string, CompiledFrame[]>>();
   const renderCache = new Map<string, RenderResult>();
 
-  const getSprite = (assetId: string, direction: Direction): RenderResult => {
-    const key = `${assetId}::${direction}::${frameIndex}`;
+  const getSprite = (assetId: string, direction: Direction, animation?: string): RenderResult => {
+    const animKey = animation ?? "default";
+    const key = `${assetId}::${direction}::${animKey}::${frameIndex}`;
     const cached = renderCache.get(key);
     if (cached) return cached;
 
@@ -164,11 +168,16 @@ export function renderRoom(
     if (!asset) {
       throw new Error(`Room "${room.id}" references unknown asset "${assetId}"`);
     }
-    let frames = compiledCache.get(assetId);
-    if (!frames) {
-      frames = compileAsset(asset).frames;
-      compiledCache.set(assetId, frames);
+    let clips = compiledCache.get(assetId);
+    if (!clips) {
+      clips = compileAssetAnimations(asset);
+      compiledCache.set(assetId, clips);
     }
+    const frames =
+      (animation ? clips.get(animation) : undefined) ??
+      clips.get("idle") ??
+      clips.get("default") ??
+      clips.values().next().value!;
     const frame = frames[frameIndex % frames.length];
     const rendered = renderAssetFrame(asset, frame.grid, palette, {
       direction,
@@ -234,18 +243,34 @@ export function renderRoom(
     drawCalls.push({ sprite: we.sprite, worldX: we.worldX, worldY: we.worldY });
   }
 
-  // 3. Objects sorted via Kahn's topological isometric depth-sorter
-  const objectItems = room.objects.map((o, idx) => {
-    const sprite = getSprite(o.assetId, o.direction);
-    return {
-      id: `${o.assetId}#${idx}`,
-      tx: o.tx,
-      ty: o.ty,
-      footprintX: sprite.footprintTiles[0],
-      footprintY: sprite.footprintTiles[1],
-      sprite,
-    };
-  });
+  // 3. Objects + Characters sorted together via Kahn's topological isometric depth-sorter
+  //    Characters have tieOrder=1 so on the exact same tile as a chair (tieOrder=0), the chair draws first.
+  const objectItems = [
+    ...room.objects.map((o, idx) => {
+      const sprite = getSprite(o.assetId, o.direction, o.animation);
+      return {
+        id: `obj:${o.assetId}#${idx}`,
+        tx: o.tx,
+        ty: o.ty,
+        footprintX: sprite.footprintTiles[0],
+        footprintY: sprite.footprintTiles[1],
+        tieOrder: 0,
+        sprite,
+      };
+    }),
+    ...(room.characters ?? []).map((c, idx) => {
+      const sprite = getSprite(c.assetId, c.direction, c.animation);
+      return {
+        id: `char:${c.assetId}#${idx}`,
+        tx: c.tx,
+        ty: c.ty,
+        footprintX: sprite.footprintTiles[0],
+        footprintY: sprite.footprintTiles[1],
+        tieOrder: 1,
+        sprite,
+      };
+    }),
+  ];
   for (const item of sortIsometricObjects(objectItems)) {
     const [wx, wy] = toWorldAnchor(item.tx, item.ty, item.footprintX, item.footprintY);
     drawCalls.push({ sprite: item.sprite, worldX: wx, worldY: wy });
