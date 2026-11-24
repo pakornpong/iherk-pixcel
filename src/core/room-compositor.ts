@@ -147,7 +147,7 @@ export function renderRoom(
   assetsById: Map<string, PixcelAsset>,
   palette: PaletteDefinition,
   opts?: { frameIndex?: number; background?: string; emissiveMode?: EmissiveMode },
-): { main: RGBAImage; emissive?: RGBAImage; width: number; height: number } {
+): { main: RGBAImage; emissive?: RGBAImage; width: number; height: number; originX: number; originY: number } {
   const frameIndex = opts?.frameIndex ?? 0;
   const emissiveMode: EmissiveMode = opts?.emissiveMode ?? "baked";
   const metrics = getTileMetrics(room.tilePreset);
@@ -252,7 +252,7 @@ export function renderRoom(
 
   if (drawCalls.length === 0) {
     const blank = createRGBAImage(metrics.tileWidth, metrics.tileHeight);
-    return { main: blank, width: blank.width, height: blank.height };
+    return { main: blank, width: blank.width, height: blank.height, originX: Math.floor(blank.width / 2), originY: blank.height - 1 };
   }
 
   // Compute tight bounding canvas with small margin
@@ -298,5 +298,5 @@ export function renderRoom(
     }
   }
 
-  return { main, emissive, width, height };
+  return { main, emissive, width, height, originX: -minX + margin, originY: -minY + margin };
 }

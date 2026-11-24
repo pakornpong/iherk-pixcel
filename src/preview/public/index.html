@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>iherk-pixcel — Isometric Pixel Art Inspector &amp; Office Sandbox</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="dot"></span>
+        <strong>iherk-pixcel</strong>
+        <span class="sub">2:1 Isometric Pixel Engine</span>
+      </div>
+      <nav class="tabs">
+        <button id="tab-inspector" class="tab active">Asset Inspector</button>
+        <button id="tab-sandbox" class="tab">Office Room Sandbox</button>
+      </nav>
+      <div class="status" id="live-status">Live Reload: Connected</div>
+    </header>
+
+    <main class="workspace">
+      <section id="panel-inspector" class="panel active">
+        <aside class="sidebar">
+          <label>Asset
+            <select id="asset-select"></select>
+          </label>
+          <div class="row">
+            <button id="btn-rot-l">⟲ Q</button>
+            <span id="dir-label">SE</span>
+            <button id="btn-rot-r">E ⟳</button>
+          </div>
+          <label>Zoom (<span id="zoom-val">4</span>×)
+            <input id="zoom-range" type="range" min="1" max="8" value="4" />
+          </label>
+          <div class="row">
+            <button id="btn-play">▶ Play</button>
+            <span id="frame-label">Frame 0</span>
+          </div>
+          <label>Emissive View
+            <select id="emissive-select">
+              <option value="main">Main (Baked Glow)</option>
+              <option value="emissive">Emissive Layer Only</option>
+            </select>
+          </label>
+          <label class="check"><input id="chk-grid" type="checkbox" checked /> Tile Diamond Grid</label>
+          <label class="check"><input id="chk-anchor" type="checkbox" checked /> Anchor Crosshair</label>
+          <div class="meta-box" id="asset-meta"></div>
+        </aside>
+        <div class="stage">
+          <canvas id="inspector-canvas" width="720" height="540"></canvas>
+        </div>
+      </section>
+
+      <section id="panel-sandbox" class="panel">
+        <aside class="sidebar">
+          <label>Place Asset
+            <select id="sandbox-asset-select"></select>
+          </label>
+          <div class="row">
+            <button id="btn-sandbox-rot">Rotate (R): <span id="sandbox-dir">SE</span></button>
+          </div>
+          <div class="row">
+            <button id="btn-sandbox-play">▶ Animate</button>
+            <button id="btn-sandbox-save">Save Room</button>
+          </div>
+          <label>Room File
+            <input id="room-file-input" type="text" value="custom-office.room.json" />
+          </label>
+          <p class="hint">Left-click tile to place. Right-click tile to remove object. Press <b>R</b> to rotate 90°.</p>
+          <div class="meta-box" id="sandbox-meta"></div>
+        </aside>
+        <div class="stage">
+          <canvas id="sandbox-canvas" width="840" height="600"></canvas>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

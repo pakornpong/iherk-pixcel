@@ -115,7 +115,7 @@ export type VoxelDslOp =
       keepOriginal?: boolean;
     };
 
-export const VoxelDslOpSchema: z.ZodType<VoxelDslOp> = z.lazy(() =>
+export const VoxelDslOpSchema: z.ZodType<VoxelDslOp, z.ZodTypeDef, unknown> = z.lazy(() =>
   z.discriminatedUnion("op", [
     BoxOpSchema,
     HollowBoxOpSchema,
