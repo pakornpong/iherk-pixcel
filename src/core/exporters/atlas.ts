@@ -6,6 +6,7 @@ export interface AtlasInputSprite {
   key: string;
   assetId: string;
   direction: Direction;
+  animation?: string;
   frameName: string;
   durationMs: number;
   layer: AssetLayer;
@@ -106,6 +107,7 @@ export function packSpriteAtlas(
       isometric: {
         assetId: sprite.assetId,
         direction: sprite.direction,
+        ...(sprite.animation ? { animation: sprite.animation } : {}),
         frameName: sprite.frameName,
         durationMs: sprite.durationMs,
         layer: sprite.layer,

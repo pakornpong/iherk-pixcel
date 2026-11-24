@@ -2,8 +2,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
+import { buildCharacterAsset, CharacterSpecSchema } from "../core/character-builder.js";
 import { carveFromOrthographicViews, type OrthographicViews } from "../core/carver.js";
-import { compileAsset } from "../core/dsl-compiler.js";
+import { compileAsset, compileAssetAnimations } from "../core/dsl-compiler.js";
 import { packSpriteAtlas, type AtlasInputSprite } from "../core/exporters/atlas.js";
 import { encodeAnimatedGIF } from "../core/exporters/gif.js";
 import { exportObjMtl } from "../core/exporters/obj.js";
@@ -28,7 +29,8 @@ function printHelp(): void {
 
 Usage:
   pixcel validate <asset.pixcel.json>
-  pixcel render <asset> [--out dir] [--directions se,sw,nw,ne] [--format png|atlas|gif|stack|obj] [--emissive baked|split|both]
+  pixcel create-character --id <name> [--hair short|spiky|bob|ponytail|parted|hood_up] [--outfit hoodie|blazer|tshirt|sweater] [--glasses] [--headset] [--out file]
+  pixcel render <asset> [--out dir] [--directions se,sw,nw,ne] [--animation idle|walk|sit_type|inspect|all] [--format png|atlas|gif|stack|obj] [--emissive baked|split|both]
   pixcel carve --front front.png [--side side.png] [--top top.png] --id <name> --out <asset.pixcel.json> [--palette office-night] [--depth 4]
   pixcel pack <asset-or-dir...> --out <dir> [--name office-atlas] [--emissive both]
   pixcel render-room <room.json> --out <room.png> [--frame 0] [--emissive baked|split|both]
@@ -73,6 +75,50 @@ async function main(): Promise<void> {
       break;
     }
 
+    case "create-character": {
+      const { values } = parseArgs({
+        args: rest,
+        options: {
+          id: { type: "string" },
+          role: { type: "string" },
+          skin: { type: "string", default: "warm" },
+          hair: { type: "string", default: "short" },
+          "hair-color": { type: "string", default: "#2c1e16" },
+          outfit: { type: "string", default: "hoodie" },
+          "outfit-color": { type: "string", default: "#2b3a55" },
+          "accent-color": { type: "string", default: "#38bdf8" },
+          "pants-color": { type: "string", default: "#1c2230" },
+          glasses: { type: "boolean", default: false },
+          headset: { type: "boolean", default: false },
+          "emissive-accent": { type: "boolean", default: false },
+          palette: { type: "string", default: "office-night" },
+          out: { type: "string" },
+        },
+      });
+      if (!values.id) throw new Error("Usage: pixcel create-character --id <name> [--out file.pixcel.json]");
+      const spec = CharacterSpecSchema.parse({
+        id: values.id,
+        role: values.role,
+        palette: values.palette,
+        skinTone: values.skin,
+        hairStyle: values.hair,
+        hairColor: values["hair-color"],
+        outfitStyle: values.outfit,
+        outfitColor: values["outfit-color"],
+        accentColor: values["accent-color"],
+        pantsColor: values["pants-color"],
+        glasses: values.glasses,
+        headset: values.headset,
+        emissiveAccent: values["emissive-accent"],
+      });
+      const asset = buildCharacterAsset(spec);
+      const outFile = path.resolve(cwd, values.out ?? path.join("assets", "characters", `${asset.id}.pixcel.json`));
+      await fs.mkdir(path.dirname(outFile), { recursive: true });
+      await fs.writeFile(outFile, `${JSON.stringify(asset, null, 2)}\n`, "utf8");
+      console.log(`Created character "${asset.id}" -> ${outFile}`);
+      break;
+    }
+
     case "render": {
       const { values, positionals } = parseArgs({
         args: rest,
@@ -80,6 +126,7 @@ async function main(): Promise<void> {
         options: {
           out: { type: "string", default: "out" },
           directions: { type: "string", default: "se,sw,nw,ne" },
+          animation: { type: "string" },
           format: { type: "string", default: "atlas" },
           emissive: { type: "string", default: "baked" },
         },
@@ -87,9 +134,26 @@ async function main(): Promise<void> {
       const target = positionals[0];
       if (!target) throw new Error("Usage: pixcel render <asset> [--out dir]");
 
-      const { asset } = await loadAssetByIdOrPath(cwd, target);
+      const assetRoot = path.isAbsolute(target) ? path.dirname(target) : cwd;
+      const { asset } = await loadAssetByIdOrPath(assetRoot, target);
       const pal = await loadPalette(asset.palette, paletteDirs);
-      const { frames } = compileAsset(asset);
+      const allClips = compileAssetAnimations(asset);
+      const hasMultiClips = Boolean(asset.animations && Object.keys(asset.animations).length > 0);
+      const selectedClips: Array<[string, ReturnType<typeof compileAsset>["frames"]]> = [];
+
+      if (values.animation === "all") {
+        for (const entry of allClips.entries()) selectedClips.push(entry);
+      } else if (values.animation) {
+        const clip = allClips.get(values.animation);
+        if (!clip) {
+          throw new Error(`Unknown animation "${values.animation}" for asset "${asset.id}". Available: [${[...allClips.keys()].join(", ")}]`);
+        }
+        selectedClips.push([values.animation, clip]);
+      } else {
+        const firstKey = allClips.has("idle") ? "idle" : allClips.keys().next().value!;
+        selectedClips.push([firstKey, allClips.get(firstKey)!]);
+      }
+
       const directions = (values.directions ?? "se,sw,nw,ne")
         .split(",")
         .map((d) => DirectionSchema.parse(d.trim())) as Direction[];
@@ -100,32 +164,35 @@ async function main(): Promise<void> {
 
       const sprites: AtlasInputSprite[] = [];
       for (const dir of directions) {
-        for (const frame of frames) {
-          const r = renderAssetFrame(asset, frame.grid, pal, { direction: dir, emissiveMode });
-          sprites.push({
-            key: `${asset.id}/${dir}/${frame.name}`,
-            assetId: asset.id,
-            direction: dir,
-            frameName: frame.name,
-            durationMs: frame.durationMs,
-            layer: asset.layer,
-            footprintTiles: r.footprintTiles,
-            anchor: r.anchor,
-            image: r.main,
-            emissive: r.emissive,
-          });
-          if (format === "png") {
-            await fs.writeFile(path.join(outDir, `${asset.id}_${dir}_${frame.name}.png`), encodePNG(r.main));
-            if (r.emissive) {
-              await fs.writeFile(
-                path.join(outDir, `${asset.id}_${dir}_${frame.name}_emissive.png`),
-                encodePNG(r.emissive),
-              );
+        for (const [clipName, frames] of selectedClips) {
+          for (const frame of frames) {
+            const r = renderAssetFrame(asset, frame.grid, pal, { direction: dir, emissiveMode });
+            const key = hasMultiClips ? `${asset.id}/${dir}/${clipName}/${frame.name}` : `${asset.id}/${dir}/${frame.name}`;
+            sprites.push({
+              key,
+              assetId: asset.id,
+              direction: dir,
+              ...(hasMultiClips ? { animation: clipName } : {}),
+              frameName: frame.name,
+              durationMs: frame.durationMs,
+              layer: asset.layer,
+              footprintTiles: r.footprintTiles,
+              anchor: r.anchor,
+              image: r.main,
+              emissive: r.emissive,
+            });
+            if (format === "png") {
+              const suffix = hasMultiClips ? `${dir}_${clipName}_${frame.name}` : `${dir}_${frame.name}`;
+              await fs.writeFile(path.join(outDir, `${asset.id}_${suffix}.png`), encodePNG(r.main));
+              if (r.emissive) {
+                await fs.writeFile(path.join(outDir, `${asset.id}_${suffix}_emissive.png`), encodePNG(r.emissive));
+              }
             }
           }
         }
       }
 
+      const firstGrid = selectedClips[0][1][0].grid;
       if (format === "atlas") {
         const packed = packSpriteAtlas(sprites, {
           imageName: `${asset.id}.png`,
@@ -141,10 +208,10 @@ async function main(): Promise<void> {
         const gif = encodeAnimatedGIF(sprites.map((s) => ({ image: s.image, durationMs: s.durationMs || 300 })));
         await fs.writeFile(path.join(outDir, `${asset.id}.gif`), gif);
       } else if (format === "stack") {
-        const stack = exportSpriteStack(frames[0].grid, asset);
+        const stack = exportSpriteStack(firstGrid, asset);
         await fs.writeFile(path.join(outDir, `${asset.id}_stack.png`), encodePNG(stack));
       } else if (format === "obj") {
-        const { obj, mtl } = exportObjMtl(frames[0].grid, asset, `${asset.id}.mtl`);
+        const { obj, mtl } = exportObjMtl(firstGrid, asset, `${asset.id}.mtl`);
         await fs.writeFile(path.join(outDir, `${asset.id}.obj`), obj);
         await fs.writeFile(path.join(outDir, `${asset.id}.mtl`), mtl);
       } else if (format !== "png") {

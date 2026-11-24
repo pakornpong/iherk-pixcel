@@ -297,7 +297,7 @@ function applyPartTransforms(
         hidden = true;
         break;
       }
-      if (tf.rotateZSteps && tf.rotateZSteps !== 0) {
+      if (tf.rotateZSteps) {
         const pivot = asset.parts?.[pid]?.pivot ?? [cx, cy, cz];
         [cx, cy] = rotatePoint90CW(cx, cy, pivot[0], pivot[1], tf.rotateZSteps);
       }

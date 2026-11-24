@@ -25,12 +25,19 @@ describe("local web preview server", () => {
     expect(htmlText).toContain("iherk-pixcel");
     expect(htmlText).toContain("outline-select");
     expect(htmlText).toContain("frame-range");
+    expect(htmlText).toContain("anim-select");
     expect(htmlText).toContain("btn-sandbox-load");
 
     const listRes = await fetch(`${srv.url}/api/assets`);
     expect(listRes.status).toBe(200);
-    const listData = (await listRes.json()) as { assets: Array<{ id: string }> };
+    const listData = (await listRes.json()) as { assets: Array<{ id: string; animations?: string[] }> };
     expect(listData.assets.some((a) => a.id === "desk-dev-dual")).toBe(true);
+    const devAgent = listData.assets.find((a) => a.id === "agent-dev");
+    expect(devAgent?.animations).toEqual(expect.arrayContaining(["idle", "walk", "sit_type", "inspect"]));
+
+    const charPngRes = await fetch(`${srv.url}/api/render/agent-dev?dir=se&anim=sit_type&frame=1`);
+    expect(charPngRes.status).toBe(200);
+    expect(charPngRes.headers.get("content-type")).toBe("image/png");
 
     const pngRes = await fetch(`${srv.url}/api/render/desk-dev-dual?dir=sw&frame=0`);
     expect(pngRes.status).toBe(200);

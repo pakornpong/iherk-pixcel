@@ -3,6 +3,7 @@ const DIRS = ["se", "sw", "nw", "ne"];
 const state = {
   assets: [],
   selectedAsset: "",
+  selectedAnim: "",
   dirIdx: 0,
   frame: 0,
   zoom: 4,
@@ -13,6 +14,7 @@ const state = {
   showAnchor: true,
   room: null,
   sandboxAsset: "desk-dev-dual",
+  sandboxAnim: "sit_type",
   sandboxDirIdx: 0,
   sandboxFrame: 0,
   sandboxPlaying: false,
@@ -35,10 +37,26 @@ async function fetchAssets() {
     sbSelect.add(opt.cloneNode(true));
   }
   if (!state.selectedAsset && state.assets.length > 0) {
-    state.selectedAsset = state.assets.find((a) => a.id === "desk-dev-dual")?.id ?? state.assets[0].id;
+    state.selectedAsset = state.assets.find((a) => a.id === "agent-dev")?.id ?? state.assets[0].id;
   }
   select.value = state.selectedAsset;
   sbSelect.value = state.sandboxAsset;
+  syncAnimOptions();
+}
+
+function syncAnimOptions() {
+  const meta = state.assets.find((a) => a.id === state.selectedAsset);
+  const animSel = el("anim-select");
+  animSel.innerHTML = "";
+  const anims = meta?.animations || [];
+  if (anims.length === 0) {
+    animSel.add(new Option("default", ""));
+    state.selectedAnim = "";
+  } else {
+    for (const a of anims) animSel.add(new Option(a, a));
+    if (!anims.includes(state.selectedAnim)) state.selectedAnim = anims[0];
+    animSel.value = state.selectedAnim;
+  }
 }
 
 async function drawInspector() {
@@ -49,13 +67,15 @@ async function drawInspector() {
   el("zoom-val").textContent = String(state.zoom);
 
   const meta = state.assets.find((a) => a.id === state.selectedAsset);
-  const frameCount = meta ? meta.frameCount : 1;
+  const frameCount =
+    (state.selectedAnim && meta?.animationFrameCounts?.[state.selectedAnim]) || meta?.frameCount || 1;
   const scrubber = el("frame-range");
   scrubber.max = String(Math.max(0, frameCount - 1));
   scrubber.value = String(state.frame % frameCount);
 
   const outlineQuery = state.outlineOverride ? `&outline=${encodeURIComponent(state.outlineOverride)}` : "";
-  const url = `/api/render/${encodeURIComponent(state.selectedAsset)}?dir=${dir}&frame=${state.frame}&layer=${state.layer}${outlineQuery}&t=${state.cacheBust}`;
+  const animQuery = state.selectedAnim ? `&anim=${encodeURIComponent(state.selectedAnim)}` : "";
+  const url = `/api/render/${encodeURIComponent(state.selectedAsset)}?dir=${dir}&frame=${state.frame}&layer=${state.layer}${animQuery}${outlineQuery}&t=${state.cacheBust}`;
   const res = await fetch(url);
   if (!res.ok) return;
 
@@ -181,6 +201,12 @@ el("tab-sandbox").onclick = () => {
 el("asset-select").onchange = (e) => {
   state.selectedAsset = e.target.value;
   state.frame = 0;
+  syncAnimOptions();
+  drawInspector();
+};
+el("anim-select").onchange = (e) => {
+  state.selectedAnim = e.target.value;
+  state.frame = 0;
   drawInspector();
 };
 el("btn-rot-l").onclick = () => {
@@ -224,16 +250,20 @@ el("btn-play").onclick = () => {
   if (state.playing) {
     playTimer = setInterval(() => {
       const meta = state.assets.find((a) => a.id === state.selectedAsset);
-      const count = meta ? meta.frameCount : 1;
+      const count =
+        (state.selectedAnim && meta?.animationFrameCounts?.[state.selectedAnim]) || meta?.frameCount || 1;
       state.frame = (state.frame + 1) % count;
       drawInspector();
-    }, 450);
+    }, 300);
   }
 };
 
 // Sandbox controls
 el("sandbox-asset-select").onchange = (e) => {
   state.sandboxAsset = e.target.value;
+};
+el("sandbox-anim-select").onchange = (e) => {
+  state.sandboxAnim = e.target.value;
 };
 el("btn-sandbox-rot").onclick = () => {
   state.sandboxDirIdx = (state.sandboxDirIdx + 1) % 4;
@@ -315,6 +345,15 @@ el("sandbox-canvas").addEventListener("click", (evt) => {
   } else if (meta?.layer === "wall-decor") {
     const edge = tile.tx === 0 ? "nw" : "ne";
     state.room.wallDecor.push({ assetId: state.sandboxAsset, tx: tile.tx, ty: tile.ty, edge });
+  } else if (meta?.category === "character") {
+    state.room.characters = state.room.characters || [];
+    state.room.characters.push({
+      assetId: state.sandboxAsset,
+      tx: tile.tx,
+      ty: tile.ty,
+      direction: dir,
+      animation: state.sandboxAnim || "idle",
+    });
   } else {
     state.room.objects.push({ assetId: state.sandboxAsset, tx: tile.tx, ty: tile.ty, direction: dir });
   }
@@ -325,7 +364,11 @@ el("sandbox-canvas").addEventListener("contextmenu", (evt) => {
   evt.preventDefault();
   const tile = screenToTile(evt);
   if (!tile || !state.room) return;
-  state.room.objects = state.room.objects.filter((o) => !(o.tx === tile.tx && o.ty === tile.ty));
+  const beforeChars = (state.room.characters || []).length;
+  state.room.characters = (state.room.characters || []).filter((c) => !(c.tx === tile.tx && c.ty === tile.ty));
+  if (state.room.characters.length === beforeChars) {
+    state.room.objects = state.room.objects.filter((o) => !(o.tx === tile.tx && o.ty === tile.ty));
+  }
   drawSandbox();
 });
 

@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import http, { type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import path from "node:path";
-import { compileAsset } from "../core/dsl-compiler.js";
+import { compileAssetAnimations } from "../core/dsl-compiler.js";
 import { encodePNG } from "../core/exporters/png.js";
 import { renderAssetFrame } from "../core/postprocess.js";
 import { renderRoom } from "../core/room-compositor.js";
@@ -19,6 +19,7 @@ import {
 } from "../core/schema.js";
 import {
   BUILTIN_ASSETS_DIR,
+  BUILTIN_CHARACTERS_DIR,
   listAssetFiles,
   loadAllAssetsMap,
   loadAssetByIdOrPath,
@@ -73,7 +74,7 @@ export async function startPreviewServer(opts: {
     }, 120);
   };
 
-  for (const watchDir of [path.join(absRoot, "assets"), BUILTIN_ASSETS_DIR]) {
+  for (const watchDir of [path.join(absRoot, "assets"), BUILTIN_ASSETS_DIR, BUILTIN_CHARACTERS_DIR]) {
     try {
       if (fsSync.existsSync(watchDir)) {
         const w = fsSync.watch(watchDir, { recursive: false }, (_evt, filename) => {
@@ -125,6 +126,11 @@ export async function startPreviewServer(opts: {
         for (const f of files) {
           try {
             const { asset } = await loadAssetByIdOrPath(absRoot, f.id);
+            const anims = asset.animations ? Object.keys(asset.animations) : [];
+            const animCounts: Record<string, number> = {};
+            if (asset.animations) {
+              for (const [k, v] of Object.entries(asset.animations)) animCounts[k] = v.frames.length;
+            }
             assets.push({
               id: asset.id,
               category: asset.category,
@@ -132,7 +138,9 @@ export async function startPreviewServer(opts: {
               outlineMode: asset.outlineMode,
               tilePreset: asset.tilePreset,
               footprintTiles: asset.footprintTiles,
-              frameCount: Math.max(1, asset.frames?.length ?? 1),
+              frameCount: Math.max(1, asset.frames?.length ?? (anims.length > 0 ? animCounts[anims[0]] : 1)),
+              animations: anims,
+              animationFrameCounts: animCounts,
             });
           } catch {
             // Skip invalid
@@ -157,6 +165,7 @@ export async function startPreviewServer(opts: {
           return;
         }
         const frameIdx = Math.max(0, Number.parseInt(reqUrl.searchParams.get("frame") ?? "0", 10) || 0);
+        const animParam = reqUrl.searchParams.get("anim") ?? undefined;
         const outlineParam = reqUrl.searchParams.get("outline");
         const outlineMode: OutlineMode | undefined = outlineParam ? OutlineModeSchema.parse(outlineParam) : undefined;
         const emissiveParam = reqUrl.searchParams.get("emissive") ?? "baked";
@@ -165,7 +174,12 @@ export async function startPreviewServer(opts: {
 
         const { asset } = await loadAssetByIdOrPath(absRoot, idCheck.data);
         const pal = await loadWorkspaceSafePalette(absRoot, asset.palette);
-        const { frames } = compileAsset(asset);
+        const clips = compileAssetAnimations(asset);
+        const frames =
+          (animParam ? clips.get(animParam) : undefined) ??
+          clips.get("idle") ??
+          clips.get("default") ??
+          clips.values().next().value!;
         const frame = frames[frameIdx % frames.length];
         const rendered = renderAssetFrame(asset, frame.grid, pal, {
           direction: dirCheck.data as Direction,

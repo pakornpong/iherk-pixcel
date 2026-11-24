@@ -26,6 +26,11 @@
           <label>Asset
             <select id="asset-select"></select>
           </label>
+          <label>Animation Clip
+            <select id="anim-select">
+              <option value="">Default</option>
+            </select>
+          </label>
           <div class="row">
             <button id="btn-rot-l">⟲ Q</button>
             <span id="dir-label">SE</span>
@@ -68,6 +73,14 @@
         <aside class="sidebar">
           <label>Place Asset
             <select id="sandbox-asset-select"></select>
+          </label>
+          <label>Character Pose
+            <select id="sandbox-anim-select">
+              <option value="idle">idle</option>
+              <option value="walk">walk</option>
+              <option value="sit_type" selected>sit_type</option>
+              <option value="inspect">inspect</option>
+            </select>
           </label>
           <div class="row">
             <button id="btn-sandbox-rot">Rotate (R): <span id="sandbox-dir">SE</span></button>

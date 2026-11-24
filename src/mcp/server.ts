@@ -3,8 +3,9 @@ import path from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { buildCharacterAsset, HairStyleSchema, OutfitStyleSchema } from "../core/character-builder.js";
 import { carveFromOrthographicViews, type OrthographicViews } from "../core/carver.js";
-import { compileAsset } from "../core/dsl-compiler.js";
+import { compileAsset, compileAssetAnimations } from "../core/dsl-compiler.js";
 import { packSpriteAtlas, type AtlasInputSprite } from "../core/exporters/atlas.js";
 import { encodeAnimatedGIF } from "../core/exporters/gif.js";
 import { exportObjMtl } from "../core/exporters/obj.js";
@@ -234,21 +235,109 @@ export function createPixcelMcpServer(rootDir: string): McpServer {
   );
 
   server.tool(
+    "create_character",
+    "Create a modular rigged chibi AI Agent character (.pixcel.json) with 4 animation clips (idle, walk, sit_type, inspect)",
+    {
+      id: SafeIdSchema,
+      role: z.string().max(64).optional(),
+      skinTone: z.string().default("warm"),
+      hairStyle: HairStyleSchema.default("short"),
+      hairColor: z.string().default("#2c1e16"),
+      outfitStyle: OutfitStyleSchema.default("hoodie"),
+      outfitColor: z.string().default("#2b3a55"),
+      accentColor: z.string().default("#38bdf8"),
+      pantsColor: z.string().default("#1c2230"),
+      shoeColor: z.string().default("#141821"),
+      glasses: z.boolean().default(false),
+      headset: z.boolean().default(false),
+      emissiveAccent: z.boolean().default(false),
+      palette: z.string().default("office-night"),
+      outPath: z.string().optional(),
+      includePreviewImage: z.boolean().default(true),
+    },
+    async (args) => {
+      try {
+        const pal = await loadWorkspaceSafePalette(absRoot, args.palette);
+        const asset = buildCharacterAsset(args);
+        const target = args.outPath
+          ? resolveSafeWorkspacePath(absRoot, args.outPath)
+          : resolveSafeWorkspacePath(absRoot, path.join("assets", "characters", `${asset.id}.pixcel.json`));
+        await fs.mkdir(path.dirname(target), { recursive: true });
+        await fs.writeFile(target, `${JSON.stringify(asset, null, 2)}\n`, "utf8");
+
+        const content: Array<{ type: "text"; text: string } | { type: "image"; data: string; mimeType: string }> = [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                id: asset.id,
+                filePath: target,
+                animations: Object.keys(asset.animations ?? {}),
+                status: "created",
+              },
+              null,
+              2,
+            ),
+          },
+        ];
+
+        if (args.includePreviewImage) {
+          const clips = compileAssetAnimations(asset);
+          const previewImgs: RGBAImage[] = [];
+          for (const clipName of ["idle", "walk", "sit_type", "inspect"]) {
+            const frames = clips.get(clipName);
+            if (!frames?.length) continue;
+            previewImgs.push(renderAssetFrame(asset, frames[0].grid, pal, { direction: "se", emissiveMode: "baked" }).main);
+          }
+          if (previewImgs.length > 0) {
+            const contact = composeContactSheet(previewImgs);
+            content.push({
+              type: "image",
+              data: encodePNG(contact).toString("base64"),
+              mimeType: "image/png",
+            });
+          }
+        }
+        return { content };
+      } catch (err) {
+        return errResult(err);
+      }
+    },
+  );
+
+  server.tool(
     "render_asset",
-    "Render an asset across directions/frames to PNG, TexturePacker atlas, GIF, sprite-stack, or OBJ+MTL, with optional inline base64 preview",
+    "Render an asset across directions/animations/frames to PNG, TexturePacker atlas, GIF, sprite-stack, or OBJ+MTL, with optional inline base64 preview",
     {
       id: z.string().min(1),
       directions: z.array(DirectionSchema).default(["se", "sw", "nw", "ne"]),
+      animation: z.string().optional(),
       format: z.enum(["png", "atlas", "gif", "stack", "obj"]).default("atlas"),
       emissiveMode: EmissiveModeSchema.default("baked"),
       outDir: z.string().optional(),
       includePreviewImage: z.boolean().default(true),
     },
-    async ({ id, directions, format, emissiveMode, outDir, includePreviewImage }) => {
+    async ({ id, directions, animation, format, emissiveMode, outDir, includePreviewImage }) => {
       try {
         const { asset } = await loadAssetByIdOrPath(absRoot, id);
         const pal = await loadWorkspaceSafePalette(absRoot, asset.palette);
-        const { frames } = compileAsset(asset);
+        const allClips = compileAssetAnimations(asset);
+        const hasMultiClips = Boolean(asset.animations && Object.keys(asset.animations).length > 0);
+        const selectedClips: Array<[string, ReturnType<typeof compileAsset>["frames"]]> = [];
+
+        if (animation === "all") {
+          for (const entry of allClips.entries()) selectedClips.push(entry);
+        } else if (animation) {
+          const clip = allClips.get(animation);
+          if (!clip) {
+            throw new Error(`Unknown animation "${animation}" for asset "${asset.id}". Available: [${[...allClips.keys()].join(", ")}]`);
+          }
+          selectedClips.push([animation, clip]);
+        } else {
+          const firstKey = allClips.has("idle") ? "idle" : allClips.keys().next().value!;
+          selectedClips.push([firstKey, allClips.get(firstKey)!]);
+        }
+
         const targetDir = resolveSafeWorkspacePath(absRoot, outDir ?? path.join("out", asset.id));
         await fs.mkdir(targetDir, { recursive: true });
 
@@ -257,35 +346,41 @@ export function createPixcelMcpServer(rootDir: string): McpServer {
         const atlasInputs: AtlasInputSprite[] = [];
 
         for (const dir of directions as Direction[]) {
-          for (let fi = 0; fi < frames.length; fi++) {
-            const frame = frames[fi];
-            const rendered = renderAssetFrame(asset, frame.grid, pal, { direction: dir, emissiveMode });
-            if (fi === 0) previewSprites.push(rendered.main);
-            atlasInputs.push({
-              key: `${asset.id}/${dir}/${frame.name}`,
-              assetId: asset.id,
-              direction: dir,
-              frameName: frame.name,
-              durationMs: frame.durationMs,
-              layer: asset.layer,
-              footprintTiles: rendered.footprintTiles,
-              anchor: rendered.anchor,
-              image: rendered.main,
-              emissive: rendered.emissive,
-            });
-            if (format === "png") {
-              const p = path.join(targetDir, `${asset.id}_${dir}_${frame.name}.png`);
-              await fs.writeFile(p, encodePNG(rendered.main));
-              outputs.push(p);
-              if (rendered.emissive) {
-                const ep = path.join(targetDir, `${asset.id}_${dir}_${frame.name}_emissive.png`);
-                await fs.writeFile(ep, encodePNG(rendered.emissive));
-                outputs.push(ep);
+          for (const [clipName, frames] of selectedClips) {
+            for (let fi = 0; fi < frames.length; fi++) {
+              const frame = frames[fi];
+              const rendered = renderAssetFrame(asset, frame.grid, pal, { direction: dir, emissiveMode });
+              if (fi === 0) previewSprites.push(rendered.main);
+              const key = hasMultiClips ? `${asset.id}/${dir}/${clipName}/${frame.name}` : `${asset.id}/${dir}/${frame.name}`;
+              atlasInputs.push({
+                key,
+                assetId: asset.id,
+                direction: dir,
+                ...(hasMultiClips ? { animation: clipName } : {}),
+                frameName: frame.name,
+                durationMs: frame.durationMs,
+                layer: asset.layer,
+                footprintTiles: rendered.footprintTiles,
+                anchor: rendered.anchor,
+                image: rendered.main,
+                emissive: rendered.emissive,
+              });
+              if (format === "png") {
+                const suffix = hasMultiClips ? `${dir}_${clipName}_${frame.name}` : `${dir}_${frame.name}`;
+                const p = path.join(targetDir, `${asset.id}_${suffix}.png`);
+                await fs.writeFile(p, encodePNG(rendered.main));
+                outputs.push(p);
+                if (rendered.emissive) {
+                  const ep = path.join(targetDir, `${asset.id}_${suffix}_emissive.png`);
+                  await fs.writeFile(ep, encodePNG(rendered.emissive));
+                  outputs.push(ep);
+                }
               }
             }
           }
         }
 
+        const firstGrid = selectedClips[0][1][0].grid;
         let atlasMeta: unknown;
         if (format === "atlas") {
           const packed = packSpriteAtlas(atlasInputs, {
@@ -310,12 +405,12 @@ export function createPixcelMcpServer(rootDir: string): McpServer {
           await fs.writeFile(gp, gifBuf);
           outputs.push(gp);
         } else if (format === "stack") {
-          const stack = exportSpriteStack(frames[0].grid, asset);
+          const stack = exportSpriteStack(firstGrid, asset);
           const sp = path.join(targetDir, `${asset.id}_stack.png`);
           await fs.writeFile(sp, encodePNG(stack));
           outputs.push(sp);
         } else if (format === "obj") {
-          const { obj, mtl } = exportObjMtl(frames[0].grid, asset, `${asset.id}.mtl`);
+          const { obj, mtl } = exportObjMtl(firstGrid, asset, `${asset.id}.mtl`);
           const op = path.join(targetDir, `${asset.id}.obj`);
           const mp = path.join(targetDir, `${asset.id}.mtl`);
           await fs.writeFile(op, obj, "utf8");
