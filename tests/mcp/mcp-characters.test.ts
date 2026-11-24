@@ -91,6 +91,25 @@ describe("Phase 2 CLI & MCP character workflow", () => {
     expect(rendered.isError).toBeFalsy();
     expect((await fs.stat(path.join(tmpDir, "out/mcp-agent/mcp-agent.gif"))).size).toBeGreaterThan(200);
 
+    // Negative security & validation checks
+    const badOut = await client.callTool({
+      name: "create_character",
+      arguments: { id: "bad-out", outPath: "../../escape.pixcel.json" },
+    });
+    expect(badOut.isError).toBe(true);
+
+    const badPal = await client.callTool({
+      name: "create_character",
+      arguments: { id: "bad-pal", palette: "../../package.json" },
+    });
+    expect(badPal.isError).toBe(true);
+
+    const badAnim = await client.callTool({
+      name: "render_asset",
+      arguments: { id: "mcp-agent", animation: "nonexistent_clip" },
+    });
+    expect(badAnim.isError).toBe(true);
+
     await client.close();
   }, 30000);
 });

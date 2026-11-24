@@ -360,8 +360,12 @@ async function main(): Promise<void> {
       const room = RoomLayoutSchema.parse(JSON.parse(await fs.readFile(path.resolve(cwd, roomFile), "utf8")));
       const pal = await loadPalette(room.palette, paletteDirs);
       const assetsMap = await loadAllAssetsMap(cwd);
+      const parsedFrame = Number(values.frame ?? "0");
+      if (!Number.isInteger(parsedFrame) || parsedFrame < 0) {
+        throw new Error(`Invalid --frame "${values.frame}": expected a non-negative integer`);
+      }
       const rendered = renderRoom(room, assetsMap, pal, {
-        frameIndex: Number(values.frame ?? 0),
+        frameIndex: parsedFrame,
         emissiveMode: EmissiveModeSchema.parse(values.emissive ?? "baked"),
       });
       const outFile = path.resolve(cwd, values.out ?? "out/room.png");

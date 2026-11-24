@@ -102,4 +102,35 @@ describe("hierarchical part rig and multi-clip animations", () => {
     expect(room.characters[0].animation).toBe("sit_type");
     expect(room.characters[0].roleLabel).toBe("DEV AGENT");
   });
+
+  it("cascades parent hide to child parts and rejects path traversal in frame.name", () => {
+    const asset = PixcelAssetSchema.parse({
+      schemaVersion: 1,
+      id: "cascade-hide",
+      materials: { a: { color: "#ffffff", kind: "matte" } },
+      parts: {
+        torso: { pivot: [10, 10, 10] },
+        head: { pivot: [10, 10, 15], parent: "torso" },
+      },
+      ops: [
+        { op: "voxel", at: [10, 10, 10], material: "a", part: "torso" },
+        { op: "voxel", at: [10, 10, 15], material: "a", part: "head" },
+      ],
+      animations: {
+        gone: { frames: [{ name: "gone_0", durationMs: 100, ops: [], partTransforms: { torso: { hide: true } } }] },
+      },
+    });
+    const clips = compileAssetAnimations(asset);
+    expect(clips.get("gone")![0].grid.size).toBe(0);
+
+    expect(() =>
+      PixcelAssetSchema.parse({
+        schemaVersion: 1,
+        id: "evil-frame",
+        materials: { a: { color: "#ffffff", kind: "matte" } },
+        ops: [],
+        frames: [{ name: "../../evil", durationMs: 100, ops: [] }],
+      }),
+    ).toThrow();
+  });
 });

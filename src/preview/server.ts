@@ -27,7 +27,7 @@ import {
   PACKAGE_ROOT,
   resolveSafeWorkspacePath,
 } from "../core/workspace.js";
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 
 const PUBLIC_DIR = path.join(PACKAGE_ROOT, "src", "preview", "public");
 
@@ -166,6 +166,13 @@ export async function startPreviewServer(opts: {
         }
         const frameIdx = Math.max(0, Number.parseInt(reqUrl.searchParams.get("frame") ?? "0", 10) || 0);
         const animParam = reqUrl.searchParams.get("anim") ?? undefined;
+        if (animParam !== undefined && animParam !== "") {
+          const animCheck = SafeIdSchema.safeParse(animParam);
+          if (!animCheck.success) {
+            sendJson(res, 400, { error: `Invalid animation clip "${animParam}"` });
+            return;
+          }
+        }
         const outlineParam = reqUrl.searchParams.get("outline");
         const outlineMode: OutlineMode | undefined = outlineParam ? OutlineModeSchema.parse(outlineParam) : undefined;
         const emissiveParam = reqUrl.searchParams.get("emissive") ?? "baked";
@@ -175,6 +182,12 @@ export async function startPreviewServer(opts: {
         const { asset } = await loadAssetByIdOrPath(absRoot, idCheck.data);
         const pal = await loadWorkspaceSafePalette(absRoot, asset.palette);
         const clips = compileAssetAnimations(asset);
+        if (animParam && !clips.has(animParam)) {
+          sendJson(res, 400, {
+            error: `Unknown animation "${animParam}" for asset "${asset.id}". Available: [${[...clips.keys()].join(", ")}]`,
+          });
+          return;
+        }
         const frames =
           (animParam ? clips.get(animParam) : undefined) ??
           clips.get("idle") ??
@@ -228,12 +241,13 @@ export async function startPreviewServer(opts: {
 
       // POST /api/room/render
       if (req.method === "POST" && pathname === "/api/room/render") {
-        const body = JSON.parse(await readBody(req)) as { room?: unknown; frameIndex?: number; emissiveMode?: string };
+        const body = JSON.parse(await readBody(req)) as { room?: unknown; frameIndex?: unknown; emissiveMode?: string };
         const room = RoomLayoutSchema.parse(body.room);
+        const frameIndex = z.number().int().min(0).default(0).parse(body.frameIndex);
         const pal = await loadWorkspaceSafePalette(absRoot, room.palette);
         const assetsMap = await loadAllAssetsMap(absRoot);
         const rendered = renderRoom(room, assetsMap, pal, {
-          frameIndex: body.frameIndex ?? 0,
+          frameIndex,
           emissiveMode: EmissiveModeSchema.parse(body.emissiveMode ?? "baked"),
         });
         const png = encodePNG(rendered.main);

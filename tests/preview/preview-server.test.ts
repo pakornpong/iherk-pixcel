@@ -39,6 +39,26 @@ describe("local web preview server", () => {
     expect(charPngRes.status).toBe(200);
     expect(charPngRes.headers.get("content-type")).toBe("image/png");
 
+    const badAnimRes = await fetch(`${srv.url}/api/render/agent-dev?dir=se&anim=..%2Fevil`);
+    expect(badAnimRes.status).toBe(400);
+
+    const unknownAnimRes = await fetch(`${srv.url}/api/render/agent-dev?dir=se&anim=does_not_exist`);
+    expect(unknownAnimRes.status).toBe(400);
+
+    const badFrameRes = await fetch(`${srv.url}/api/room/render`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        frameIndex: -1,
+        room: {
+          schemaVersion: 1, id: "neg-frame", tilePreset: "64x32",
+          widthTiles: 2, depthTiles: 2, floors: [], walls: [], wallDecor: [], objects: [],
+          characters: [{ assetId: "agent-dev", tx: 0, ty: 0, direction: "se", animation: "idle" }],
+        },
+      }),
+    });
+    expect(badFrameRes.status).toBe(400);
+
     const pngRes = await fetch(`${srv.url}/api/render/desk-dev-dual?dir=sw&frame=0`);
     expect(pngRes.status).toBe(200);
     expect(pngRes.headers.get("content-type")).toBe("image/png");

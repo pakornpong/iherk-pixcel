@@ -222,9 +222,11 @@ export function rasterizeIsometric(
     const hasTopNeighbor = rotatedGrid.has(v.x, v.y, v.z + 1);
     const hasRightNeighbor = rotatedGrid.has(v.x + 1, v.y, v.z) || (seamlessAlongX && v.x === footprintVoxelsX - 1);
     const hasLeftNeighbor = rotatedGrid.has(v.x, v.y + 1, v.z) || (seamlessAlongY && v.y === footprintVoxelsY - 1);
+    const hasRayFrontNeighbor = rotatedGrid.has(v.x + 1, v.y + 1, v.z + 1);
 
-    // Completely hidden interior voxel
-    if (hasTopNeighbor && hasRightNeighbor && hasLeftNeighbor) continue;
+    // Completely hidden interior voxel (only truly occluded along isometric ray when (x+1,y+1,z+1) also exists)
+    if (hasTopNeighbor && hasRightNeighbor && hasLeftNeighbor && hasRayFrontNeighbor) continue;
+    const isConcaveCorner = hasTopNeighbor && hasRightNeighbor && hasLeftNeighbor && !hasRayFrontNeighbor;
 
     for (let dz = 0; dz < effectiveZScale; dz++) {
       for (let dy = 0; dy < scaleFactor; dy++) {
@@ -247,6 +249,9 @@ export function rasterizeIsometric(
           } else if (subLeftExposed && subRightExposed) {
             // Front corner vertical ridge: left vs right split on sub-voxel or left by convention
             fKind = dx >= dy && scaleFactor === 2 ? 3 : 2;
+          } else if (isConcaveCorner && dx === scaleFactor - 1 && dy === scaleFactor - 1 && dz === scaleFactor - 1) {
+            // Exposed concave inner corner along isometric ray (+1,+1,+1): fill pixel so background never bleeds through
+            fKind = 2;
           } else {
             continue;
           }

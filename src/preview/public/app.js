@@ -276,9 +276,9 @@ el("btn-sandbox-play").onclick = () => {
   if (sbTimer) clearInterval(sbTimer);
   if (state.sandboxPlaying) {
     sbTimer = setInterval(() => {
-      state.sandboxFrame = (state.sandboxFrame + 1) % 6;
+      state.sandboxFrame = (state.sandboxFrame + 1) % 12;
       drawSandbox();
-    }, 500);
+    }, 350);
   }
 };
 el("btn-sandbox-load").onclick = async () => {

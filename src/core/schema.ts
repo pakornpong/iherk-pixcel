@@ -164,7 +164,7 @@ export const PartTransformSchema = z.object({
 export type PartTransform = z.infer<typeof PartTransformSchema>;
 
 export const FrameDefinitionSchema = z.object({
-  name: z.string().min(1),
+  name: SafeIdSchema,
   durationMs: z.number().int().min(0).default(500),
   ops: z.array(VoxelDslOpSchema).default([]),
   decals: z.array(DecalSchema).default([]),

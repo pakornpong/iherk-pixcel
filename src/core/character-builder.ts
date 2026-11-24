@@ -51,17 +51,18 @@ function buildHairOps(hairStyle: HairStyle): VoxelDslOp[] {
   switch (hairStyle) {
     case "short":
       ops.push(
-        { op: "box", from: [11, 11, 25], to: [20, 20, 27], material: "hair", part: "head" },
-        { op: "box", from: [11, 10, 19], to: [20, 12, 26], material: "hair", part: "head" },
-        { op: "box", from: [10, 12, 22], to: [11, 18, 26], material: "hair", part: "head" },
-        { op: "box", from: [20, 12, 22], to: [21, 18, 26], material: "hair", part: "head" },
+        { op: "box", from: [10, 10, 25], to: [21, 20, 26], material: "hair", part: "head" },
+        { op: "box", from: [11, 11, 27], to: [20, 20, 27], material: "hair", part: "head" },
+        { op: "box", from: [10, 10, 19], to: [21, 12, 25], material: "hair", part: "head" },
+        { op: "box", from: [10, 12, 22], to: [11, 18, 25], material: "hair", part: "head" },
+        { op: "box", from: [20, 12, 22], to: [21, 18, 25], material: "hair", part: "head" },
         { op: "box", from: [12, 20, 24], to: [19, 20, 25], material: "hair", part: "head" },
       );
       break;
     case "spiky":
       ops.push(
-        { op: "box", from: [11, 11, 25], to: [20, 20, 26], material: "hair", part: "head" },
-        { op: "box", from: [11, 10, 19], to: [20, 12, 25], material: "hair", part: "head" },
+        { op: "box", from: [10, 10, 25], to: [21, 20, 26], material: "hair", part: "head" },
+        { op: "box", from: [10, 10, 19], to: [21, 12, 25], material: "hair", part: "head" },
         { op: "box", from: [12, 12, 27], to: [14, 15, 28], material: "hair", part: "head" },
         { op: "box", from: [16, 13, 27], to: [19, 17, 29], material: "hair", part: "head" },
         { op: "box", from: [11, 17, 26], to: [14, 21, 28], material: "hair", part: "head" },
@@ -70,10 +71,11 @@ function buildHairOps(hairStyle: HairStyle): VoxelDslOp[] {
       break;
     case "parted":
       ops.push(
-        { op: "box", from: [11, 11, 25], to: [20, 20, 27], material: "hair", part: "head" },
-        { op: "box", from: [11, 10, 19], to: [20, 12, 26], material: "hair", part: "head" },
-        { op: "box", from: [10, 12, 21], to: [11, 19, 26], material: "hair", part: "head" },
-        { op: "box", from: [20, 12, 21], to: [21, 19, 26], material: "hair", part: "head" },
+        { op: "box", from: [10, 10, 25], to: [21, 20, 26], material: "hair", part: "head" },
+        { op: "box", from: [11, 11, 27], to: [20, 20, 27], material: "hair", part: "head" },
+        { op: "box", from: [10, 10, 19], to: [21, 12, 25], material: "hair", part: "head" },
+        { op: "box", from: [10, 12, 21], to: [11, 19, 25], material: "hair", part: "head" },
+        { op: "box", from: [20, 12, 21], to: [21, 19, 25], material: "hair", part: "head" },
         { op: "box", from: [11, 20, 23], to: [16, 21, 26], material: "hair", part: "head" },
         { op: "box", from: [18, 20, 24], to: [20, 21, 26], material: "hair", part: "head" },
       );
@@ -89,10 +91,11 @@ function buildHairOps(hairStyle: HairStyle): VoxelDslOp[] {
       break;
     case "ponytail":
       ops.push(
-        { op: "box", from: [11, 11, 25], to: [20, 20, 27], material: "hair", part: "head" },
-        { op: "box", from: [11, 10, 19], to: [20, 12, 26], material: "hair", part: "head" },
-        { op: "box", from: [10, 12, 21], to: [11, 18, 26], material: "hair", part: "head" },
-        { op: "box", from: [20, 12, 21], to: [21, 18, 26], material: "hair", part: "head" },
+        { op: "box", from: [10, 10, 25], to: [21, 20, 26], material: "hair", part: "head" },
+        { op: "box", from: [11, 11, 27], to: [20, 20, 27], material: "hair", part: "head" },
+        { op: "box", from: [10, 10, 19], to: [21, 12, 25], material: "hair", part: "head" },
+        { op: "box", from: [10, 12, 21], to: [11, 18, 25], material: "hair", part: "head" },
+        { op: "box", from: [20, 12, 21], to: [21, 18, 25], material: "hair", part: "head" },
         { op: "box", from: [12, 20, 24], to: [19, 20, 25], material: "hair", part: "head" },
         // Tie + trailing ponytail behind head
         { op: "box", from: [14, 9, 21], to: [17, 10, 22], material: "accent", part: "head" },
@@ -225,7 +228,7 @@ export function buildCharacterAsset(rawSpec: CharacterSpec): PixcelAsset {
   ];
 
   const inspectArmFrame = (handZ: number): VoxelDslOp[] => [
-    { op: "box", from: [21, 15, 14], to: [22, 19, 16], material: "outfit", part: "arm_r" },
+    { op: "box", from: [21, 15, 14], to: [22, 19, Math.max(16, handZ)], material: "outfit", part: "arm_r" },
     { op: "box", from: [20, 19, handZ], to: [22, 23, handZ + 1], material: sleeveMat, part: "arm_r" },
     { op: "box", from: [20, 23, handZ], to: [21, 25, handZ + 1], material: "skin", part: "arm_r" },
   ];
