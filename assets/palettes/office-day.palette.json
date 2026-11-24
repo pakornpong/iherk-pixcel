@@ -1,0 +1,24 @@
+{
+  "name": "office-day",
+  "description": "Warm daylight indie office palette with oak wood, cream walls, and subtle tech accents",
+  "colors": {
+    "void_bg": "#1e2430",
+    "outline_ink": "#22202e",
+    "wood_dark": "#7a5234",
+    "wood_mid": "#9c6b43",
+    "wood_warm": "#bd8958",
+    "wall_cream": "#dfd7c8",
+    "wall_trim": "#b8ae9c",
+    "window_glass": "#7dd3fc",
+    "metal_dark": "#3b4252",
+    "metal_mid": "#64748b",
+    "chair_fabric": "#334155",
+    "whiteboard_surface": "#f8fafc",
+    "screen_bg": "#1e3a5f",
+    "screen_cyan": "#0ea5e9",
+    "screen_green": "#16a34a",
+    "screen_amber": "#d97706",
+    "plant_mid": "#2f855a",
+    "plant_bright": "#48bb78"
+  }
+}
