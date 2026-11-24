@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "id": "whiteboard-arch",
+  "category": "decor",
+  "layer": "wall-decor",
+  "outlineMode": "silhouette",
+  "tilePreset": "64x32",
+  "voxelsPerTile": 32,
+  "footprintTiles": [1, 2],
+  "palette": "office-night",
+  "materials": {
+    "frame": { "color": "#262b38", "kind": "metal" },
+    "board": { "color": "#e6e9ef", "kind": "matte" },
+    "ink_dark": { "color": "#3b4252", "kind": "matte" },
+    "ink_blue": { "color": "#2563eb", "kind": "matte" },
+    "ink_amber": { "color": "#d97706", "kind": "matte" },
+    "ink_green": { "color": "#16a34a", "kind": "matte" }
+  },
+  "ops": [
+    { "op": "box", "from": [4, 6, 18], "to": [5, 57, 40], "material": "frame", "part": "frame" },
+    { "op": "box", "from": [5, 8, 20], "to": [5, 55, 38], "material": "board", "part": "surface" },
+    { "op": "box", "from": [5, 8, 17], "to": [7, 55, 18], "material": "frame", "part": "tray" }
+  ],
+  "decals": [
+    {
+      "face": "+X",
+      "origin": [5, 11, 36],
+      "part": "surface",
+      "legend": { ".": "board", "k": "ink_dark", "b": "ink_blue", "a": "ink_amber", "g": "ink_green" },
+      "rows": [
+        "kkkkkkkkkkkkkk......................",
+        "....................................",
+        "..bbbbbb........aaaaaa......gggggg..",
+        "..b....b--kk--->a....a--kk->g....g..",
+        "..bbbbbb........aaaaaa......gggggg..",
+        "....................|...............",
+        "....................k...............",
+        "....................v...............",
+        "........bbbbbb....aaaaaa............",
+        "........b....b<-->a....a............",
+        "........bbbbbb....aaaaaa............",
+        "....................................",
+        "..kkkkk.bbbbbb..kkkkk.gggggg........"
+      ]
+    }
+  ]
+}

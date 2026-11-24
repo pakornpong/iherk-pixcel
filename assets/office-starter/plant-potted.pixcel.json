@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "plant-potted",
+  "category": "decor",
+  "layer": "object",
+  "outlineMode": "silhouette",
+  "tilePreset": "64x32",
+  "voxelsPerTile": 32,
+  "footprintTiles": [1, 1],
+  "palette": "office-night",
+  "materials": {
+    "pot": { "color": "#3c4659", "kind": "matte" },
+    "pot_rim": { "color": "#4f5b72", "kind": "matte" },
+    "soil": { "color": "#2c1e16", "kind": "matte" },
+    "leaf_dark": { "color": "#1f4d3a", "kind": "matte" },
+    "leaf_mid": { "color": "#2d6a4f", "kind": "matte" },
+    "leaf_bright": { "color": "#52b788", "kind": "matte" }
+  },
+  "ops": [
+    { "op": "cylinder", "center": [16, 16], "zFrom": 0, "zTo": 8, "radius": 5, "material": "pot", "part": "pot" },
+    { "op": "cylinder", "center": [16, 16], "zFrom": 9, "zTo": 10, "radius": 6, "material": "pot_rim", "part": "pot" },
+    { "op": "cylinder", "center": [16, 16], "zFrom": 10, "zTo": 10, "radius": 5, "material": "soil", "part": "pot" },
+    { "op": "box", "from": [15, 15, 11], "to": [17, 17, 16], "material": "leaf_dark", "part": "foliage" },
+    { "op": "cylinder", "center": [16, 16], "zFrom": 14, "zTo": 20, "radius": 7, "material": "leaf_dark", "part": "foliage" },
+    { "op": "cylinder", "center": [15, 17], "zFrom": 18, "zTo": 24, "radius": 6, "material": "leaf_mid", "part": "foliage" },
+    { "op": "cylinder", "center": [17, 15], "zFrom": 22, "zTo": 27, "radius": 4, "material": "leaf_bright", "part": "foliage" },
+    { "op": "box", "from": [10, 15, 19], "to": [13, 18, 22], "material": "leaf_mid", "part": "foliage" },
+    { "op": "box", "from": [19, 18, 17], "to": [22, 21, 21], "material": "leaf_bright", "part": "foliage" }
+  ]
+}

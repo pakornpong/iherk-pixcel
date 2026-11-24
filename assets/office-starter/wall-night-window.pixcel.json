@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "wall-night-window",
+  "category": "architecture",
+  "layer": "wall",
+  "outlineMode": "top-only",
+  "tilePreset": "64x32",
+  "voxelsPerTile": 32,
+  "footprintTiles": [1, 1],
+  "palette": "office-night",
+  "materials": {
+    "wall_main": { "color": "#252e45", "kind": "matte" },
+    "wall_trim": { "color": "#33405e", "kind": "matte" },
+    "baseboard": { "color": "#1a2133", "kind": "wood" },
+    "cap_dark": { "color": "#171c26", "kind": "matte" },
+    "frame": { "color": "#141a29", "kind": "metal" },
+    "night_glass": { "color": "#183661", "kind": "glass" },
+    "moon_glint": { "color": "#38bdf8", "kind": "emissive", "glowRadius": 1, "glowIntensity": 0.25 }
+  },
+  "ops": [
+    { "op": "box", "from": [0, 0, 0], "to": [3, 31, 45], "material": "wall_main", "part": "wall" },
+    { "op": "box", "from": [0, 0, 0], "to": [4, 31, 3], "material": "baseboard", "part": "baseboard" },
+    { "op": "box", "from": [0, 0, 46], "to": [3, 31, 47], "material": "cap_dark", "part": "cap" },
+    { "op": "box", "from": [3, 0, 44], "to": [3, 31, 45], "material": "wall_trim", "part": "trim" },
+    { "op": "box", "from": [2, 4, 14], "to": [4, 27, 39], "material": "frame", "part": "frame" },
+    { "op": "box", "from": [3, 6, 16], "to": [4, 25, 37], "material": null },
+    { "op": "box", "from": [2, 6, 16], "to": [2, 25, 37], "material": "night_glass", "part": "glass" },
+    { "op": "box", "from": [3, 15, 16], "to": [3, 16, 37], "material": "frame", "part": "mullion" },
+    { "op": "box", "from": [3, 6, 26], "to": [3, 25, 27], "material": "frame", "part": "mullion" },
+    { "op": "box", "from": [3, 4, 14], "to": [5, 27, 15], "material": "wall_trim", "part": "sill" },
+    { "op": "voxel", "at": [2, 9, 34], "material": "moon_glint" },
+    { "op": "voxel", "at": [2, 10, 33], "material": "moon_glint" },
+    { "op": "voxel", "at": [2, 21, 32], "material": "moon_glint" }
+  ]
+}

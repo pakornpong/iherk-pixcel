@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "wall-corner-pillar",
+  "category": "architecture",
+  "layer": "wall",
+  "outlineMode": "top-only",
+  "tilePreset": "64x32",
+  "voxelsPerTile": 32,
+  "footprintTiles": [1, 1],
+  "palette": "office-night",
+  "materials": {
+    "wall_main": { "color": "#252e45", "kind": "matte" },
+    "baseboard": { "color": "#1a2133", "kind": "wood" },
+    "cap_dark": { "color": "#171c26", "kind": "matte" }
+  },
+  "ops": [
+    { "op": "box", "from": [0, 0, 0], "to": [3, 3, 45], "material": "wall_main", "part": "pillar" },
+    { "op": "box", "from": [0, 0, 0], "to": [4, 4, 3], "material": "baseboard", "part": "baseboard" },
+    { "op": "box", "from": [0, 0, 46], "to": [3, 3, 47], "material": "cap_dark", "part": "cap" }
+  ]
+}

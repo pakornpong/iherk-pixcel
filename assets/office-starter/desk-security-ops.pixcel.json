@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "id": "desk-security-ops",
+  "category": "furniture",
+  "layer": "object",
+  "outlineMode": "silhouette",
+  "tilePreset": "64x32",
+  "voxelsPerTile": 32,
+  "footprintTiles": [2, 1],
+  "palette": "office-night",
+  "materials": {
+    "wood_top": { "color": "#4b3121", "kind": "wood" },
+    "metal_dark": { "color": "#171c26", "kind": "metal" },
+    "metal_mid": { "color": "#2b3344", "kind": "metal" },
+    "screen_bg": { "color": "#161b33", "kind": "emissive", "glowRadius": 1, "glowIntensity": 0.2 },
+    "sec_blue": { "color": "#38bdf8", "kind": "emissive", "glowRadius": 2, "glowIntensity": 0.45 },
+    "alert_red": { "color": "#ef4444", "kind": "emissive", "glowRadius": 2, "glowIntensity": 0.5 },
+    "alert_amber": { "color": "#f59e0b", "kind": "emissive", "glowRadius": 2, "glowIntensity": 0.45 }
+  },
+  "ops": [
+    { "op": "box", "from": [3, 3, 0], "to": [7, 27, 13], "material": "metal_dark", "part": "leg_l" },
+    { "op": "box", "from": [50, 3, 0], "to": [60, 27, 13], "material": "metal_dark", "part": "tower_r" },
+    { "op": "box", "from": [1, 1, 14], "to": [62, 29, 16], "material": "wood_top", "part": "desktop" },
+
+    { "op": "box", "from": [18, 6, 17], "to": [26, 10, 17], "material": "metal_mid", "part": "mon_main" },
+    { "op": "box", "from": [21, 7, 18], "to": [23, 8, 21], "material": "metal_dark", "part": "mon_main" },
+    { "op": "box", "from": [7, 6, 20], "to": [37, 8, 34], "material": "metal_dark", "part": "mon_main" },
+
+    { "op": "box", "from": [45, 6, 17], "to": [51, 10, 17], "material": "metal_mid", "part": "mon_alert" },
+    { "op": "box", "from": [47, 7, 18], "to": [49, 8, 21], "material": "metal_dark", "part": "mon_alert" },
+    { "op": "box", "from": [40, 6, 20], "to": [56, 8, 35], "material": "metal_dark", "part": "mon_alert" },
+
+    { "op": "box", "from": [18, 17, 17], "to": [37, 23, 17], "material": "metal_dark", "part": "keyboard" },
+    { "op": "box", "from": [20, 19, 18], "to": [35, 21, 18], "material": "sec_blue", "part": "keyboard" }
+  ],
+  "decals": [
+    {
+      "face": "+Y",
+      "origin": [9, 8, 32],
+      "part": "mon_main",
+      "legend": { ".": "screen_bg", "b": "sec_blue", "a": "alert_amber" },
+      "rows": [
+        "..........................",
+        ".bbbbbbbbbbbbbbbbbbbbbbbb.",
+        "..........................",
+        "...bbbb....bbbb....aaa....",
+        "..b....b..b....b..a...a...",
+        "..b.bb.b..b.bb.b..aaaaa...",
+        "..bbbbbb..bbbbbb..........",
+        "..........................",
+        ".bbbb.bbb.bbbbbbb.bbbb....",
+        ".aaa..bbbb.bbb............",
+        ".........................."
+      ]
+    },
+    {
+      "face": "+Y",
+      "origin": [42, 8, 33],
+      "part": "mon_alert",
+      "legend": { ".": "screen_bg", "r": "alert_red", "a": "alert_amber" },
+      "rows": [
+        "............",
+        ".rrrrrrrrrr.",
+        "............",
+        ".....aa.....",
+        "....aaaa....",
+        "...aa..aa...",
+        "..aaaaaaaa..",
+        "............",
+        ".rrr..rrrr..",
+        ".aaa..aaa...",
+        ".rrrr.......",
+        "............"
+      ]
+    }
+  ],
+  "frames": [
+    { "name": "alert_0", "durationMs": 500, "ops": [] },
+    {
+      "name": "alert_1",
+      "durationMs": 500,
+      "ops": [
+        { "op": "box", "from": [43, 8, 32], "to": [52, 8, 32], "material": "alert_amber", "part": "mon_alert" },
+        { "op": "box", "from": [47, 8, 28], "to": [48, 8, 29], "material": "alert_red", "part": "mon_alert" }
+      ]
+    }
+  ]
+}

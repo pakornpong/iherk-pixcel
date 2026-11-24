@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "bookshelf-wood",
+  "category": "furniture",
+  "layer": "object",
+  "outlineMode": "silhouette",
+  "tilePreset": "64x32",
+  "voxelsPerTile": 32,
+  "footprintTiles": [1, 1],
+  "palette": "office-night",
+  "materials": {
+    "wood_frame": { "color": "#4b3121", "kind": "wood" },
+    "wood_shelf": { "color": "#62402a", "kind": "wood" },
+    "book_red": { "color": "#b93848", "kind": "matte" },
+    "book_teal": { "color": "#2a8f8f", "kind": "matte" },
+    "book_ochre": { "color": "#c98a2e", "kind": "matte" },
+    "book_indigo": { "color": "#4e5aa8", "kind": "matte" }
+  },
+  "ops": [
+    { "op": "box", "from": [3, 4, 0], "to": [28, 16, 31], "material": "wood_frame", "part": "case" },
+    { "op": "box", "from": [5, 7, 3], "to": [26, 16, 10], "material": null },
+    { "op": "box", "from": [5, 7, 13], "to": [26, 16, 20], "material": null },
+    { "op": "box", "from": [5, 7, 23], "to": [26, 16, 29], "material": null },
+    { "op": "box", "from": [5, 6, 11], "to": [26, 16, 12], "material": "wood_shelf", "part": "shelf" },
+    { "op": "box", "from": [5, 6, 21], "to": [26, 16, 22], "material": "wood_shelf", "part": "shelf" },
+
+    { "op": "box", "from": [6, 9, 3], "to": [9, 15, 9], "material": "book_red", "part": "books" },
+    { "op": "box", "from": [10, 9, 3], "to": [13, 15, 8], "material": "book_teal", "part": "books" },
+    { "op": "box", "from": [14, 9, 3], "to": [18, 15, 9], "material": "book_indigo", "part": "books" },
+    { "op": "box", "from": [19, 9, 3], "to": [23, 15, 8], "material": "book_ochre", "part": "books" },
+
+    { "op": "box", "from": [6, 9, 13], "to": [10, 15, 19], "material": "book_indigo", "part": "books" },
+    { "op": "box", "from": [11, 9, 13], "to": [14, 15, 18], "material": "book_ochre", "part": "books" },
+    { "op": "box", "from": [15, 9, 13], "to": [19, 15, 19], "material": "book_red", "part": "books" },
+    { "op": "box", "from": [20, 9, 13], "to": [24, 15, 18], "material": "book_teal", "part": "books" },
+
+    { "op": "box", "from": [6, 9, 23], "to": [9, 15, 28], "material": "book_teal", "part": "books" },
+    { "op": "box", "from": [10, 9, 23], "to": [14, 15, 28], "material": "book_red", "part": "books" },
+    { "op": "box", "from": [16, 9, 23], "to": [21, 15, 27], "material": "book_ochre", "part": "books" }
+  ]
+}

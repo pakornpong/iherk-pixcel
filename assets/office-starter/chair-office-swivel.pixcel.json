@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "chair-office-swivel",
+  "category": "furniture",
+  "layer": "object",
+  "outlineMode": "silhouette",
+  "tilePreset": "64x32",
+  "voxelsPerTile": 32,
+  "footprintTiles": [1, 1],
+  "palette": "office-night",
+  "materials": {
+    "metal_dark": { "color": "#171c26", "kind": "metal" },
+    "metal_mid": { "color": "#2b3344", "kind": "metal" },
+    "fabric_dark": { "color": "#1f2430", "kind": "matte" },
+    "fabric_cushion": { "color": "#2d3548", "kind": "matte" }
+  },
+  "ops": [
+    { "op": "box", "from": [14, 14, 0], "to": [17, 17, 8], "material": "metal_dark", "part": "base" },
+    { "op": "box", "from": [8, 15, 0], "to": [23, 16, 1], "material": "metal_mid", "part": "base" },
+    { "op": "box", "from": [15, 8, 0], "to": [16, 23, 1], "material": "metal_mid", "part": "base" },
+    { "op": "box", "from": [8, 8, 9], "to": [23, 23, 11], "material": "fabric_cushion", "part": "seat" },
+    { "op": "box", "from": [9, 7, 12], "to": [22, 10, 26], "material": "fabric_dark", "part": "backrest" },
+    { "op": "box", "from": [11, 10, 14], "to": [20, 10, 24], "material": "fabric_cushion", "part": "backrest" },
+    { "op": "box", "from": [7, 10, 12], "to": [8, 21, 16], "material": "metal_mid", "part": "arm_left" },
+    { "op": "box", "from": [23, 10, 12], "to": [24, 21, 16], "material": "metal_mid", "part": "arm_right" }
+  ]
+}

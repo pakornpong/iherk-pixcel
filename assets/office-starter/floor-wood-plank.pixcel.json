@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "floor-wood-plank",
+  "category": "architecture",
+  "layer": "floor",
+  "outlineMode": "none",
+  "tilePreset": "64x32",
+  "voxelsPerTile": 32,
+  "footprintTiles": [1, 1],
+  "palette": "office-night",
+  "materials": {
+    "plank_a": { "color": "#543725", "kind": "wood" },
+    "plank_b": { "color": "#5f3e29", "kind": "wood" },
+    "plank_c": { "color": "#4c3120", "kind": "wood" },
+    "seam": { "color": "#382216", "kind": "wood" }
+  },
+  "ops": [
+    { "op": "box", "from": [0, 0, 0], "to": [31, 7, 0], "material": "plank_a" },
+    { "op": "box", "from": [0, 8, 0], "to": [31, 15, 0], "material": "plank_b" },
+    { "op": "box", "from": [0, 16, 0], "to": [31, 23, 0], "material": "plank_c" },
+    { "op": "box", "from": [0, 24, 0], "to": [31, 31, 0], "material": "plank_a" },
+    { "op": "box", "from": [0, 0, 0], "to": [31, 0, 0], "material": "seam" },
+    { "op": "box", "from": [0, 8, 0], "to": [31, 8, 0], "material": "seam" },
+    { "op": "box", "from": [0, 16, 0], "to": [31, 16, 0], "material": "seam" },
+    { "op": "box", "from": [0, 24, 0], "to": [31, 24, 0], "material": "seam" },
+    { "op": "box", "from": [14, 1, 0], "to": [14, 7, 0], "material": "seam" },
+    { "op": "box", "from": [24, 9, 0], "to": [24, 15, 0], "material": "seam" },
+    { "op": "box", "from": [8, 17, 0], "to": [8, 23, 0], "material": "seam" },
+    { "op": "box", "from": [20, 25, 0], "to": [20, 31, 0], "material": "seam" }
+  ]
+}

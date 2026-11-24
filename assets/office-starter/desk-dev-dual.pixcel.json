@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "id": "desk-dev-dual",
+  "category": "furniture",
+  "layer": "object",
+  "outlineMode": "silhouette",
+  "tilePreset": "64x32",
+  "voxelsPerTile": 32,
+  "footprintTiles": [2, 1],
+  "palette": "office-night",
+  "materials": {
+    "wood_top": { "color": "#62402a", "kind": "wood" },
+    "wood_trim": { "color": "#4b3121", "kind": "wood" },
+    "metal_dark": { "color": "#171c26", "kind": "metal" },
+    "metal_mid": { "color": "#2b3344", "kind": "metal" },
+    "screen_bg": { "color": "#0f2942", "kind": "emissive", "glowRadius": 1, "glowIntensity": 0.2 },
+    "code_cyan": { "color": "#38bdf8", "kind": "emissive", "glowRadius": 2, "glowIntensity": 0.45 },
+    "code_blue": { "color": "#3b82f6", "kind": "emissive", "glowRadius": 1, "glowIntensity": 0.3 },
+    "code_green": { "color": "#22c55e", "kind": "emissive", "glowRadius": 1, "glowIntensity": 0.35 },
+    "key_glow": { "color": "#38bdf8", "kind": "emissive", "glowRadius": 1, "glowIntensity": 0.2 },
+    "mug": { "color": "#d8dee9", "kind": "matte" }
+  },
+  "ops": [
+    { "op": "box", "from": [3, 3, 0], "to": [14, 27, 13], "material": "metal_dark", "part": "drawer_left" },
+    { "op": "box", "from": [5, 27, 3], "to": [12, 28, 4], "material": "metal_mid", "part": "drawer_left" },
+    { "op": "box", "from": [5, 27, 8], "to": [12, 28, 9], "material": "metal_mid", "part": "drawer_left" },
+    { "op": "box", "from": [57, 3, 0], "to": [60, 27, 13], "material": "metal_dark", "part": "leg_right" },
+    { "op": "box", "from": [3, 3, 12], "to": [60, 5, 13], "material": "metal_dark", "part": "crossbar" },
+    { "op": "box", "from": [1, 1, 14], "to": [62, 29, 16], "material": "wood_top", "part": "desktop" },
+    { "op": "box", "from": [1, 29, 14], "to": [62, 29, 15], "material": "wood_trim", "part": "desktop" },
+
+    { "op": "box", "from": [15, 6, 17], "to": [21, 10, 17], "material": "metal_mid", "part": "mon_left" },
+    { "op": "box", "from": [17, 7, 18], "to": [19, 8, 21], "material": "metal_dark", "part": "mon_left" },
+    { "op": "box", "from": [8, 6, 20], "to": [28, 8, 33], "material": "metal_dark", "part": "mon_left" },
+
+    { "op": "box", "from": [38, 6, 17], "to": [44, 10, 17], "material": "metal_mid", "part": "mon_right" },
+    { "op": "box", "from": [40, 7, 18], "to": [42, 8, 21], "material": "metal_dark", "part": "mon_right" },
+    { "op": "box", "from": [31, 6, 20], "to": [51, 8, 33], "material": "metal_dark", "part": "mon_right" },
+
+    { "op": "box", "from": [20, 16, 17], "to": [39, 22, 17], "material": "metal_dark", "part": "keyboard" },
+    { "op": "box", "from": [22, 18, 18], "to": [37, 20, 18], "material": "key_glow", "part": "keyboard" },
+    { "op": "box", "from": [43, 18, 17], "to": [46, 22, 18], "material": "metal_mid", "part": "mouse" },
+
+    { "op": "cylinder", "center": [55, 18], "zFrom": 17, "zTo": 20, "radius": 2, "material": "mug", "part": "mug" }
+  ],
+  "decals": [
+    {
+      "face": "+Y",
+      "origin": [10, 8, 31],
+      "part": "mon_left",
+      "legend": { ".": "screen_bg", "c": "code_cyan", "b": "code_blue", "g": "code_green" },
+      "rows": [
+        "................",
+        ".cccc.bbb.......",
+        "..gggg..cccc....",
+        "..bb.cccccc.....",
+        "....ccc.gg.bb...",
+        "..ggggg.........",
+        ".cccc.bb.ccc....",
+        "...bbb..gggg....",
+        ".cc.cccc........",
+        "................"
+      ]
+    },
+    {
+      "face": "+Y",
+      "origin": [33, 8, 31],
+      "part": "mon_right",
+      "legend": { ".": "screen_bg", "c": "code_cyan", "b": "code_blue", "g": "code_green" },
+      "rows": [
+        "................",
+        ".ggg..bbbb......",
+        ".cccc..ccc......",
+        "...bbbb.gggg....",
+        ".ccc..cccc.bb...",
+        "..gg.bbb........",
+        ".cccccc.gg......",
+        "..bbbb.ccc......",
+        ".gg.............",
+        "................"
+      ]
+    }
+  ],
+  "frames": [
+    { "name": "idle_0", "durationMs": 550, "ops": [] },
+    {
+      "name": "idle_1",
+      "durationMs": 550,
+      "ops": [
+        { "op": "box", "from": [18, 8, 23], "to": [21, 8, 23], "material": "code_cyan", "part": "mon_left" },
+        { "op": "box", "from": [37, 8, 23], "to": [41, 8, 23], "material": "code_green", "part": "mon_right" }
+      ]
+    }
+  ]
+}

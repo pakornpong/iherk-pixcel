@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "id": "server-rack",
+  "category": "tech",
+  "layer": "object",
+  "outlineMode": "silhouette",
+  "tilePreset": "64x32",
+  "voxelsPerTile": 32,
+  "footprintTiles": [1, 1],
+  "palette": "office-night",
+  "materials": {
+    "chassis": { "color": "#171c26", "kind": "metal" },
+    "bezel": { "color": "#262f42", "kind": "metal" },
+    "vent": { "color": "#10141c", "kind": "matte" },
+    "led_cyan": { "color": "#38bdf8", "kind": "emissive", "glowRadius": 2, "glowIntensity": 0.45 },
+    "led_green": { "color": "#22c55e", "kind": "emissive", "glowRadius": 2, "glowIntensity": 0.4 },
+    "led_amber": { "color": "#f59e0b", "kind": "emissive", "glowRadius": 2, "glowIntensity": 0.4 }
+  },
+  "ops": [
+    { "op": "box", "from": [4, 4, 0], "to": [27, 27, 41], "material": "chassis", "part": "cabinet" },
+    { "op": "box", "from": [6, 26, 2], "to": [25, 27, 39], "material": "bezel", "part": "front" },
+    { "op": "box", "from": [8, 27, 5], "to": [23, 27, 9], "material": "vent", "part": "bay_0" },
+    { "op": "box", "from": [8, 27, 13], "to": [23, 27, 17], "material": "vent", "part": "bay_1" },
+    { "op": "box", "from": [8, 27, 21], "to": [23, 27, 25], "material": "vent", "part": "bay_2" },
+    { "op": "box", "from": [8, 27, 29], "to": [23, 27, 36], "material": "vent", "part": "bay_3" },
+    { "op": "voxel", "at": [9, 27, 35], "material": "led_cyan", "part": "leds" },
+    { "op": "voxel", "at": [12, 27, 35], "material": "led_green", "part": "leds" },
+    { "op": "voxel", "at": [15, 27, 35], "material": "led_green", "part": "leds" },
+    { "op": "voxel", "at": [9, 27, 24], "material": "led_cyan", "part": "leds" },
+    { "op": "voxel", "at": [12, 27, 24], "material": "led_amber", "part": "leds" },
+    { "op": "voxel", "at": [9, 27, 16], "material": "led_green", "part": "leds" },
+    { "op": "voxel", "at": [12, 27, 16], "material": "led_cyan", "part": "leds" },
+    { "op": "voxel", "at": [9, 27, 8], "material": "led_green", "part": "leds" }
+  ],
+  "frames": [
+    { "name": "blink_0", "durationMs": 350, "ops": [] },
+    {
+      "name": "blink_1",
+      "durationMs": 350,
+      "ops": [
+        { "op": "voxel", "at": [12, 27, 35], "material": "vent", "part": "leds" },
+        { "op": "voxel", "at": [18, 27, 35], "material": "led_cyan", "part": "leds" },
+        { "op": "voxel", "at": [15, 27, 24], "material": "led_green", "part": "leds" }
+      ]
+    },
+    {
+      "name": "blink_2",
+      "durationMs": 350,
+      "ops": [
+        { "op": "voxel", "at": [9, 27, 24], "material": "vent", "part": "leds" },
+        { "op": "voxel", "at": [15, 27, 16], "material": "led_amber", "part": "leds" },
+        { "op": "voxel", "at": [21, 27, 35], "material": "led_green", "part": "leds" }
+      ]
+    }
+  ]
+}
