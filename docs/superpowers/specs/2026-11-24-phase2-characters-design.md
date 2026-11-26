@@ -1,7 +1,7 @@
 # iherk-pixcel Phase 2 — Modular AI Agent Character System Design
 
 **Date:** 2026-11-24  
-**Status:** Approved (Project Lead Autonomy Mode)  
+**Status:** Implemented (Phase 2 `b4f322a`..`4bea682`, Phase 2b clips `f65e2dd`) — updated 2026-11-26  
 **Base:** Phase 1 `main` (`290432d`)
 
 ---
@@ -20,6 +20,9 @@ Bring the **AI Agent Office** to life with animated, modular pixel-art character
 2. **Parametric Character Builder (`src/core/character-builder.ts`)**:
    - `buildCharacterAsset(spec: CharacterSpec): PixcelAsset` generates a complete, editable `.pixcel.json` chibi character with hierarchical `parts` (`torso`, `head`, `arm_l`, `arm_r`, `leg_l`, `leg_r`), customizable `skinTone`, `hairStyle` (`short`, `spiky`, `bob`, `ponytail`, `parted`, `hood_up`), `hairColor`, `outfitStyle` (`hoodie`, `blazer`, `tshirt`, `sweater`), `outfitColor`, `accentColor`, `pantsColor`, `glasses`, `headset`, and `emissiveAccent`.
    - Generates 4 built-in clips: `idle` (2f breathing), `walk` (4f stride cycle), `sit_type` (2f seated typing on chair/desk), and `inspect` (2f pointing/operating server/whiteboard).
+   - **Phase 2b (implemented):** 4 more clips — `talk` (2f two-hand gesture + head nod), `assign` (2f pointing arm + clipboard), `rest_coffee` (2f mug lifted to mouth), `rest_sleep` (2f *seated* nap: `sit_type` pose, arms folded, head drooping, breathing). Props (mug, clipboard) exist only in frame ops. Total: 8 clips, 18 frames.
+   - Facing: the builder authors the face on `+Y` (eyes at `y = 19`), so a character faces `+Y` in `se`, `-X` in `sw`, `-Y` in `nw`, `+X` in `ne`. Seated legs sit at chair seat height `z = 11`.
+   - Frame `ops` are absolute and only base-grid parts move with `partTransforms`, so a clip that changes a limb hides the base part (`hide: true`) and redraws it.
 3. **Room Characters Layer (`src/core/room-compositor.ts`)**:
    - Add optional `characters: Array<{ assetId, tx, ty, direction, animation, roleLabel? }>` to `RoomLayoutSchema`.
    - Characters sort in the **same Kahn's topological depth pass** as `objects`, with deterministic tie-breaking on shared tiles (`objects` like chairs draw before `characters` occupying the same `(tx, ty)` so seated agents sit cleanly on top of `chair-office-swivel`).

@@ -1,8 +1,16 @@
 # iherk-pixcel — Design Document
 
 **Date:** 2026-11-24  
-**Status:** Ready for Approval (Builder Check Completed)  
+**Status:** Implemented (Phase 1 + Phase 2 characters, see [`2026-11-24-phase2-characters-design.md`](./2026-11-24-phase2-characters-design.md)) — notes updated 2026-11-26  
 **Target Workspace:** `/Users/dev3/Documents/IHERK/iherk-pixcel`
+
+> **2026-11-26 — where the code differs from this design:**
+> - **Palettes do not colour renders.** `renderAssetFrame(asset, grid, _palette, …)` ignores the palette argument; every colour comes from the asset's `materials`, and shade ramps are built from each material colour (`buildShadeRamp`). Palettes are only used by the carver (nearest-colour quantization) and by `list_palettes` / `get_palette`. Re-theming an asset means rewriting its material colours (this is what iherk-hell-factory does for its day/office themes).
+> - **Direction = rotation of the authored model, not a fixed facing.** `se` renders the model as authored, `sw`/`nw`/`ne` rotate it 90°/180°/270° CW around Z (`+X → +Y`). Which way an asset "faces" depends on where its front was authored. The character builder authors faces toward `+Y`, so characters face `+Y` in `se`, `-X` in `sw`, `-Y` in `nw`, `+X` in `ne` (§6.1 below assumes a `+X` front).
+> - **Starter pack has 12 assets** (§6.9 lists 12) plus `sample-office.room.json`; `assets/characters/` holds 5 generated agents.
+> - **MCP has 11 tools:** the 10 in §6.7 plus `create_character` (and `render_asset` accepts `animation`).
+> - **Glass stays opaque** as designed; translucent glass exists only downstream (hell-factory pods).
+> - **Downstream consumer:** iherk-hell-factory imports `dist/core/{schema,dsl-compiler,character-builder,postprocess,exporters/atlas,exporters/png}.js` directly. Run `npm run build` after changing `src/core` or hell-factory keeps the old behaviour. See §9.
 
 ---
 
@@ -355,3 +363,20 @@ Plus `sample-office.room.json` assembling these into a complete dark AI Agent Of
 - Exact CLI argument parser (`commander` / `citty` / Node `util.parseArgs`) and terminal formatting.
 - Visual layout and CSS styling of the local Web Preview & Office Room Sandbox controls (while preserving nearest-neighbor Canvas 2D rendering, dirty-render efficiency, and live-reload usability).
 - Exact voxel coordinates and decal pixel patterns of each starter office asset (guided by Section 1's visual conventions and *Isometric Interiors* crispness).
+
+---
+
+## 9. Downstream Contract (iherk-hell-factory) *(added 2026-11-26)*
+
+iherk-hell-factory loads this package from `../iherk-pixcel/dist/core` (override with `IHERK_PIXCEL_ROOT`) and must keep working without edits here. Treat these as a public API:
+
+| Export | Used for |
+|---|---|
+| `PixcelAssetSchema` (`schema.js`) | Validating starter, prop, library and Gemini-crafted assets |
+| `compileAsset`, `compileAssetAnimations` (`dsl-compiler.js`) | Legacy `frames` assets and multi-clip characters (frames named `<clip>_<i>`) |
+| `buildCharacterAsset` (`character-builder.js`) | The 10 office characters (spec list lives in hell-factory `pixcel-bridge.ts`) |
+| `renderAssetFrame` (`postprocess.js`) | All sprites, `emissiveMode: "both"` |
+| `packSpriteAtlas` (`exporters/atlas.js`) | Runtime atlases with `isometric.anchor` / `footprintTiles` |
+| `createRGBAImage`, `encodePNG` (`exporters/png.js`) | Contact sheets and atlas images |
+
+Hell-factory relies on: clip names `idle`, `walk`, `sit_type`, `inspect`, `talk`, `assign`, `rest_coffee`, `rest_sleep`; the character part ids `head`, `torso`, `arm_l`, `arm_r`, `leg_l`, `leg_r`; chair seat height `z = 11`; and the direction convention above. Layers beyond the four in `AssetLayerSchema` (`tabletop`, `foreground`) are added on the hell-factory side from `category`, not here.
