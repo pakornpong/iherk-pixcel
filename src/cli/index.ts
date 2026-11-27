@@ -14,12 +14,19 @@ import { listBuiltinPalettes, loadPalette } from "../core/palette.js";
 import { renderAssetFrame } from "../core/postprocess.js";
 import { renderRoom } from "../core/room-compositor.js";
 import {
+  renderAssetAtAngle,
+  renderTurntableSequence,
+  type LightLockMode,
+} from "../core/turntable-rasterizer.js";
+import {
   DirectionSchema,
   EmissiveModeSchema,
+  OutlineModeSchema,
   PixcelAssetSchema,
   RoomLayoutSchema,
   type Direction,
   type EmissiveMode,
+  type OutlineMode,
 } from "../core/schema.js";
 import { listAssetFiles, loadAllAssetsMap, loadAssetByIdOrPath } from "../core/workspace.js";
 import { startMcpServer } from "../mcp/server.js";
@@ -31,6 +38,7 @@ Usage:
   pixcel validate <asset.pixcel.json>
   pixcel create-character --id <name> [--hair short|spiky|bob|ponytail|parted|hood_up] [--outfit hoodie|blazer|tshirt|sweater] [--glasses] [--headset] [--out file]
   pixcel render <asset> [--out dir] [--directions se,sw,nw,ne] [--animation idle|walk|sit_type|inspect|talk|assign|rest_coffee|rest_sleep|all] [--format png|atlas|gif|stack|obj] [--emissive baked|split|both]
+  pixcel turntable <asset> [--out dir] [--frames 36] [--pitch 30] [--yaw deg] [--fps 18] [--format gif|atlas|png] [--animation idle] [--outline silhouette|none] [--light camera|world]
   pixcel carve --front front.png [--side side.png] [--top top.png] --id <name> --out <asset.pixcel.json> [--palette office-night] [--depth 4]
   pixcel pack <asset-or-dir...> --out <dir> [--name office-atlas] [--emissive both]
   pixcel render-room <room.json> --out <room.png> [--frame 0] [--emissive baked|split|both]
@@ -378,6 +386,106 @@ async function main(): Promise<void> {
         await fs.writeFile(emissiveFile, encodePNG(rendered.emissive));
       }
       console.log(`Rendered room "${room.id}" (${rendered.width}x${rendered.height}) -> ${outFile}`);
+      break;
+    }
+
+    case "turntable": {
+      const { values, positionals } = parseArgs({
+        args: rest,
+        allowPositionals: true,
+        options: {
+          out: { type: "string", default: "out" },
+          frames: { type: "string", default: "36" },
+          pitch: { type: "string", default: "30" },
+          yaw: { type: "string" },
+          fps: { type: "string", default: "18" },
+          scale: { type: "string", default: "1" },
+          format: { type: "string", default: "gif" },
+          animation: { type: "string" },
+          frame: { type: "string", default: "0" },
+          outline: { type: "string" },
+          light: { type: "string", default: "camera" },
+        },
+      });
+      const target = positionals[0];
+      if (!target) throw new Error("Usage: pixcel turntable <asset> [--out dir] [--frames 36] [--format gif|atlas|png]");
+
+      const assetRoot = path.isAbsolute(target) ? path.dirname(target) : cwd;
+      const { asset } = await loadAssetByIdOrPath(assetRoot, target);
+      const pal = await loadPalette(asset.palette, paletteDirs);
+      const clips = compileAssetAnimations(asset);
+      const clipName = values.animation ?? (clips.has("idle") ? "idle" : clips.keys().next().value!);
+      const clipFrames = clips.get(clipName);
+      if (!clipFrames) {
+        throw new Error(`Unknown animation "${clipName}" for asset "${asset.id}". Available: [${[...clips.keys()].join(", ")}]`);
+      }
+      const frameIdx = Math.max(0, Number.parseInt(values.frame ?? "0", 10) || 0);
+      const grid = clipFrames[frameIdx % clipFrames.length].grid;
+
+      const pitchDeg = Number(values.pitch ?? 30);
+      const pixelScale = Number(values.scale ?? 1);
+      const outlineMode: OutlineMode | undefined = values.outline ? OutlineModeSchema.parse(values.outline) : undefined;
+      const lightLock = (values.light === "world" ? "world" : "camera") as LightLockMode;
+      const outDir = path.resolve(cwd, values.out ?? "out");
+      await fs.mkdir(outDir, { recursive: true });
+
+      if (values.yaw !== undefined) {
+        const yawDeg = Number(values.yaw);
+        const r = renderAssetAtAngle(asset, grid, pal, { yawDeg, pitchDeg, pixelScale, outlineMode, lightLock });
+        const outPath = path.join(outDir, `${asset.id}_y${Math.round(yawDeg)}_p${Math.round(pitchDeg)}.png`);
+        await fs.writeFile(outPath, encodePNG(r.image));
+        console.log(`Rendered single turntable view (${r.image.width}x${r.image.height}) -> ${outPath}`);
+        break;
+      }
+
+      const frameCount = Math.max(4, Math.min(180, Number.parseInt(values.frames ?? "36", 10) || 36));
+      const fps = Math.max(1, Math.min(60, Number.parseInt(values.fps ?? "18", 10) || 18));
+      const seq = renderTurntableSequence(asset, grid, pal, {
+        frames: frameCount,
+        pitchDeg,
+        pixelScale,
+        outlineMode,
+        lightLock,
+      });
+
+      const fmt = (values.format ?? "gif").toLowerCase();
+      if (fmt === "gif") {
+        const durationMs = Math.max(20, Math.round(1000 / fps));
+        const gif = encodeAnimatedGIF(seq.map((s) => ({ image: s.image, durationMs })));
+        const outPath = path.join(outDir, `${asset.id}_360.gif`);
+        await fs.writeFile(outPath, gif);
+        console.log(`Exported ${frameCount}-frame 360° GIF -> ${outPath}`);
+      } else if (fmt === "atlas") {
+        const sprites: AtlasInputSprite[] = seq.map((s, idx) => ({
+          key: `${asset.id}/angle_${String(idx).padStart(3, "0")}_${Math.round(s.yawDeg)}deg`,
+          assetId: asset.id,
+          direction: "se",
+          frameName: `angle_${String(idx).padStart(3, "0")}`,
+          durationMs: Math.round(1000 / fps),
+          layer: asset.layer,
+          footprintTiles: asset.footprintTiles,
+          anchor: s.anchor,
+          image: s.image,
+        }));
+        const packed = packSpriteAtlas(sprites, {
+          imageName: `${asset.id}_turntable_${frameCount}.png`,
+          tilePreset: asset.tilePreset,
+        });
+        const pngPath = path.join(outDir, `${asset.id}_turntable_${frameCount}.png`);
+        const jsonPath = path.join(outDir, `${asset.id}_turntable_${frameCount}.atlas.json`);
+        await fs.writeFile(pngPath, encodePNG(packed.sheet));
+        await fs.writeFile(jsonPath, `${JSON.stringify(packed.atlas, null, 2)}\n`, "utf8");
+        console.log(`Exported ${frameCount}-angle atlas -> ${pngPath} & ${jsonPath}`);
+      } else if (fmt === "png") {
+        for (let i = 0; i < seq.length; i++) {
+          const s = seq[i];
+          const outPath = path.join(outDir, `${asset.id}_a${String(i).padStart(3, "0")}_${Math.round(s.yawDeg)}deg.png`);
+          await fs.writeFile(outPath, encodePNG(s.image));
+        }
+        console.log(`Exported ${frameCount} PNG angles -> ${outDir}`);
+      } else {
+        throw new Error(`Unsupported turntable format "${fmt}". Use gif, atlas, or png.`);
+      }
       break;
     }
 

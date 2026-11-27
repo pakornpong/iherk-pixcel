@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>iherk-pixcel — Isometric Pixel Art Inspector &amp; Office Sandbox</title>
+    <title>iherk-pixcel — 360° Pixel Art Turntable, Inspector &amp; Office Sandbox</title>
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
@@ -11,17 +11,96 @@
       <div class="brand">
         <span class="dot"></span>
         <strong>iherk-pixcel</strong>
-        <span class="sub">2:1 Isometric Pixel Engine</span>
+        <span class="sub">3D Voxel → 360° &amp; 2:1 Isometric Pixel Engine</span>
       </div>
       <nav class="tabs">
-        <button id="tab-inspector" class="tab active">Asset Inspector</button>
+        <button id="tab-turntable" class="tab active">360° Turntable</button>
+        <button id="tab-inspector" class="tab">2:1 Iso Inspector</button>
         <button id="tab-sandbox" class="tab">Office Room Sandbox</button>
       </nav>
       <div class="status" id="live-status">Live Reload: Connected</div>
     </header>
 
     <main class="workspace">
-      <section id="panel-inspector" class="panel active">
+      <section id="panel-turntable" class="panel active">
+        <aside class="sidebar">
+          <label>Asset
+            <select id="tt-asset-select"></select>
+          </label>
+          <label>Animation Clip
+            <select id="tt-anim-select">
+              <option value="">Default</option>
+            </select>
+          </label>
+          <div class="seg-group" role="group" aria-label="Render Mode">
+            <button id="btn-mode-pixelart" class="seg active">PIXELART</button>
+            <button id="btn-mode-3d" class="seg">3D SMOOTH</button>
+          </div>
+          <label><span>Pixel Size (<strong id="tt-px-val">4</strong>×)</span>
+            <input id="tt-px-range" type="range" min="2" max="8" value="4" />
+          </label>
+          <label><span>Zoom (<strong id="tt-zoom-val">1.0</strong>×)</span>
+            <input id="tt-zoom-range" type="range" min="40" max="300" value="100" />
+          </label>
+          <div class="row">
+            <button id="btn-tt-spin">▶ Spin 360°</button>
+            <button id="btn-tt-anim">▶ Play Clip</button>
+          </div>
+          <label><span>Spin Speed (<strong id="tt-speed-val">48</strong>°/s)</span>
+            <input id="tt-speed-range" type="range" min="12" max="140" value="48" />
+          </label>
+          <label class="check"><input id="chk-tt-outline" type="checkbox" checked /> Silhouette Outline (1px)</label>
+          <label class="check"><input id="chk-tt-shading" type="checkbox" checked /> Hue-Shifted Shading + AO</label>
+          <label>Lighting
+            <select id="tt-light-select">
+              <option value="camera" selected>Camera Light (Pixel Art)</option>
+              <option value="world">World Sun (Fixed)</option>
+            </select>
+          </label>
+          <label>Studio Background
+            <select id="tt-bg-select">
+              <option value="night" selected>Office Night</option>
+              <option value="slate">Dark Slate</option>
+              <option value="light">Light Studio</option>
+            </select>
+          </label>
+          <div class="row">
+            <button id="btn-tt-export-gif" class="accent-btn">⬇ Export 360° GIF</button>
+          </div>
+          <p class="hint">Drag anywhere to rotate 360° smoothly · Wheel to zoom · Shift+Drag to pan · Arrow keys to nudge.</p>
+          <div class="meta-box" id="tt-meta"></div>
+        </aside>
+        <div class="stage stage-col">
+          <div class="canvas-wrap">
+            <canvas id="turntable-canvas" width="760" height="540"></canvas>
+            <div class="hud-pill" id="tt-hud">Yaw 315.0° · Pitch 30.0° · PIXELART</div>
+          </div>
+          <div class="compass-bar">
+            <div class="compass-group">
+              <span class="bar-label">8-DIR ISO</span>
+              <button class="snap-btn" data-yaw="0" data-pitch="30">S</button>
+              <button class="snap-btn active" data-yaw="315" data-pitch="30">SE</button>
+              <button class="snap-btn" data-yaw="270" data-pitch="30">E</button>
+              <button class="snap-btn" data-yaw="225" data-pitch="30">NE</button>
+              <button class="snap-btn" data-yaw="180" data-pitch="30">N</button>
+              <button class="snap-btn" data-yaw="135" data-pitch="30">NW</button>
+              <button class="snap-btn" data-yaw="90" data-pitch="30">W</button>
+              <button class="snap-btn" data-yaw="45" data-pitch="30">SW</button>
+            </div>
+            <div class="compass-group">
+              <span class="bar-label">ORTHO</span>
+              <button class="snap-btn" data-yaw="0" data-pitch="0">FR</button>
+              <button class="snap-btn" data-yaw="270" data-pitch="0">RS</button>
+              <button class="snap-btn" data-yaw="180" data-pitch="0">BK</button>
+              <button class="snap-btn" data-yaw="90" data-pitch="0">LS</button>
+              <button class="snap-btn" data-yaw="0" data-pitch="89">TOP</button>
+              <button id="btn-tt-reset" class="snap-btn">RESET</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-inspector" class="panel">
         <aside class="sidebar">
           <label>Asset
             <select id="asset-select"></select>
@@ -36,7 +115,7 @@
             <span id="dir-label">SE</span>
             <button id="btn-rot-r">E ⟳</button>
           </div>
-          <label>Zoom (<span id="zoom-val">4</span>×)
+          <label><span>Zoom (<strong id="zoom-val">4</strong>×)</span>
             <input id="zoom-range" type="range" min="1" max="8" value="4" />
           </label>
           <div class="row">

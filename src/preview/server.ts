@@ -4,9 +4,12 @@ import http, { type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import path from "node:path";
 import { compileAssetAnimations } from "../core/dsl-compiler.js";
+import { encodeAnimatedGIF } from "../core/exporters/gif.js";
 import { encodePNG } from "../core/exporters/png.js";
+import { buildVoxelMesh, serializeVoxelMesh } from "../core/mesh-builder.js";
 import { renderAssetFrame } from "../core/postprocess.js";
 import { renderRoom } from "../core/room-compositor.js";
+import { renderTurntableSequence, type LightLockMode } from "../core/turntable-rasterizer.js";
 import {
   DirectionSchema,
   EmissiveModeSchema,
@@ -92,12 +95,26 @@ export async function startPreviewServer(opts: {
       const reqUrl = new URL(req.url ?? "/", `http://${host}`);
       const pathname = reqUrl.pathname;
 
+      if (req.method === "GET" && pathname === "/favicon.ico") {
+        res.writeHead(204);
+        res.end();
+        return;
+      }
+
       // Static files
-      if (req.method === "GET" && (pathname === "/" || pathname === "/index.html" || pathname === "/app.js" || pathname === "/style.css")) {
+      if (
+        req.method === "GET" &&
+        (pathname === "/" ||
+          pathname === "/index.html" ||
+          pathname === "/app.js" ||
+          pathname === "/turntable.js" ||
+          pathname === "/style.css")
+      ) {
         const file = pathname === "/" ? "index.html" : pathname.slice(1);
         const contentTypes: Record<string, string> = {
           "index.html": "text/html; charset=utf-8",
           "app.js": "application/javascript; charset=utf-8",
+          "turntable.js": "application/javascript; charset=utf-8",
           "style.css": "text/css; charset=utf-8",
         };
         const data = await fs.readFile(path.join(PUBLIC_DIR, file));
@@ -213,6 +230,103 @@ export async function startPreviewServer(opts: {
           "x-pixcel-step-y": String(rendered.tileMetrics.stepY),
         });
         res.end(png);
+        return;
+      }
+
+      // GET /api/mesh/:id — exposed-face voxel mesh for real-time 60 FPS WebGL2 360° turntable
+      if (req.method === "GET" && pathname.startsWith("/api/mesh/")) {
+        const rawId = decodeURIComponent(pathname.slice("/api/mesh/".length));
+        const idCheck = SafeIdSchema.safeParse(rawId);
+        if (!idCheck.success) {
+          sendJson(res, 400, { error: `Invalid asset ID: "${rawId}"` });
+          return;
+        }
+        const frameIdx = Math.max(0, Number.parseInt(reqUrl.searchParams.get("frame") ?? "0", 10) || 0);
+        const animParam = reqUrl.searchParams.get("anim") ?? undefined;
+        if (animParam !== undefined && animParam !== "") {
+          const animCheck = SafeIdSchema.safeParse(animParam);
+          if (!animCheck.success) {
+            sendJson(res, 400, { error: `Invalid animation clip "${animParam}"` });
+            return;
+          }
+        }
+        const { asset } = await loadAssetByIdOrPath(absRoot, idCheck.data);
+        const clips = compileAssetAnimations(asset);
+        if (animParam && !clips.has(animParam)) {
+          sendJson(res, 400, {
+            error: `Unknown animation "${animParam}" for asset "${asset.id}". Available: [${[...clips.keys()].join(", ")}]`,
+          });
+          return;
+        }
+        const clipKey = animParam || (clips.has("idle") ? "idle" : clips.has("default") ? "default" : clips.keys().next().value!);
+        const frames = clips.get(clipKey)!;
+        const resolvedIdx = frameIdx % frames.length;
+        const frame = frames[resolvedIdx];
+        const mesh = buildVoxelMesh(frame.grid, asset);
+        const serialized = serializeVoxelMesh(mesh);
+        sendJson(res, 200, {
+          id: asset.id,
+          category: asset.category,
+          outlineMode: asset.outlineMode,
+          anim: clipKey,
+          frameIndex: resolvedIdx,
+          frameCount: frames.length,
+          durationMs: frame.durationMs,
+          mesh: serialized,
+        });
+        return;
+      }
+
+      // GET /api/turntable/:id — export smooth 360° turntable as animated GIF
+      if (req.method === "GET" && pathname.startsWith("/api/turntable/")) {
+        const rawId = decodeURIComponent(pathname.slice("/api/turntable/".length));
+        const idCheck = SafeIdSchema.safeParse(rawId);
+        if (!idCheck.success) {
+          sendJson(res, 400, { error: `Invalid asset ID: "${rawId}"` });
+          return;
+        }
+        const frameCount = z.coerce.number().int().min(4).max(72).default(36).parse(reqUrl.searchParams.get("frames") ?? 36);
+        const pitchDeg = z.coerce.number().min(-90).max(90).default(30).parse(reqUrl.searchParams.get("pitch") ?? 30);
+        const fps = z.coerce.number().int().min(1).max(60).default(18).parse(reqUrl.searchParams.get("fps") ?? 18);
+        const pixelScale = z.coerce.number().min(0.5).max(3).default(1).parse(reqUrl.searchParams.get("scale") ?? 1);
+        const lightLock = z.enum(["camera", "world"]).default("camera").parse(reqUrl.searchParams.get("light") ?? "camera") as LightLockMode;
+        const outlineParam = reqUrl.searchParams.get("outline");
+        const outlineMode: OutlineMode | undefined = outlineParam ? OutlineModeSchema.parse(outlineParam) : undefined;
+        const shadingParam = reqUrl.searchParams.get("shading");
+        const shading = shadingParam === "0" || shadingParam === "false" ? false : true;
+        const animParam = reqUrl.searchParams.get("anim") ?? undefined;
+        const frameIdx = Math.max(0, Number.parseInt(reqUrl.searchParams.get("frame") ?? "0", 10) || 0);
+
+        const { asset } = await loadAssetByIdOrPath(absRoot, idCheck.data);
+        const pal = await loadWorkspaceSafePalette(absRoot, asset.palette);
+        const clips = compileAssetAnimations(asset);
+        if (animParam && !clips.has(animParam)) {
+          sendJson(res, 400, { error: `Unknown animation "${animParam}" for asset "${asset.id}"` });
+          return;
+        }
+        const frames =
+          (animParam ? clips.get(animParam) : undefined) ??
+          clips.get("idle") ??
+          clips.get("default") ??
+          clips.values().next().value!;
+        const frame = frames[frameIdx % frames.length];
+        const seq = renderTurntableSequence(asset, frame.grid, pal, {
+          frames: frameCount,
+          pitchDeg,
+          pixelScale,
+          outlineMode,
+          shading,
+          lightLock,
+        });
+        const durationMs = Math.max(20, Math.round(1000 / fps));
+        const gif = encodeAnimatedGIF(seq.map((s) => ({ image: s.image, durationMs })));
+        res.writeHead(200, {
+          "content-type": "image/gif",
+          "content-length": gif.length,
+          "cache-control": "no-store",
+          "content-disposition": `attachment; filename="${asset.id}-360.gif"`,
+        });
+        res.end(gif);
         return;
       }
 

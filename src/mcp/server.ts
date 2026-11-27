@@ -14,9 +14,11 @@ import { exportSpriteStack } from "../core/exporters/sprite-stack.js";
 import { listBuiltinPalettes } from "../core/palette.js";
 import { renderAssetFrame } from "../core/postprocess.js";
 import { renderRoom } from "../core/room-compositor.js";
+import { renderTurntableSequence, type LightLockMode } from "../core/turntable-rasterizer.js";
 import {
   DirectionSchema,
   EmissiveModeSchema,
+  OutlineModeSchema,
   PixcelAssetSchema,
   RoomLayoutSchema,
   SafeIdSchema,
@@ -567,6 +569,109 @@ export function createPixcelMcpServer(rootDir: string): McpServer {
             {
               type: "text",
               text: JSON.stringify({ name, frameCount: Object.keys(packed.atlas.frames).length, outputs }, null, 2),
+            },
+          ],
+        };
+      } catch (err) {
+        return errResult(err);
+      }
+    },
+  );
+
+  server.tool(
+    "render_turntable",
+    "Render an asset as a smooth 360-degree orthographic turntable (8-dir, 16-dir, or 36-frame animated GIF / TexturePacker atlas) with crisp pixel-art shading and silhouette outline.",
+    {
+      id: z.string().min(1),
+      frames: z.number().int().min(4).max(72).default(16),
+      pitchDeg: z.number().min(-90).max(90).default(30),
+      fps: z.number().int().min(1).max(60).default(18),
+      format: z.enum(["gif", "atlas", "png"]).default("gif"),
+      animation: SafeIdSchema.optional(),
+      frameIndex: z.number().int().min(0).default(0),
+      outlineMode: OutlineModeSchema.optional(),
+      lightLock: z.enum(["camera", "world"]).default("camera"),
+      outDir: z.string().default("out/turntable"),
+    },
+    async ({ id, frames, pitchDeg, fps, format, animation, frameIndex, outlineMode, lightLock, outDir }) => {
+      try {
+        const { asset } = await loadAssetByIdOrPath(absRoot, id);
+        const pal = await loadWorkspaceSafePalette(absRoot, asset.palette);
+        const clips = compileAssetAnimations(asset);
+        const clipName = animation ?? (clips.has("idle") ? "idle" : clips.keys().next().value!);
+        const clipFrames = clips.get(clipName);
+        if (!clipFrames) {
+          throw new Error(`Unknown animation "${clipName}" for asset "${asset.id}". Available: [${[...clips.keys()].join(", ")}]`);
+        }
+        const grid = clipFrames[frameIndex % clipFrames.length].grid;
+        const seq = renderTurntableSequence(asset, grid, pal, {
+          frames,
+          pitchDeg,
+          outlineMode,
+          lightLock: lightLock as LightLockMode,
+        });
+
+        const targetDir = resolveSafeWorkspacePath(absRoot, outDir);
+        await fs.mkdir(targetDir, { recursive: true });
+        const outputs: string[] = [];
+
+        if (format === "gif") {
+          const durationMs = Math.max(20, Math.round(1000 / fps));
+          const gif = encodeAnimatedGIF(seq.map((s) => ({ image: s.image, durationMs })));
+          const gifPath = path.join(targetDir, `${asset.id}_360.gif`);
+          await fs.writeFile(gifPath, gif);
+          outputs.push(gifPath);
+        } else if (format === "atlas") {
+          const sprites: AtlasInputSprite[] = seq.map((s, idx) => ({
+            key: `${asset.id}/angle_${String(idx).padStart(3, "0")}_${Math.round(s.yawDeg)}deg`,
+            assetId: asset.id,
+            direction: "se",
+            frameName: `angle_${String(idx).padStart(3, "0")}`,
+            durationMs: Math.round(1000 / fps),
+            layer: asset.layer,
+            footprintTiles: asset.footprintTiles,
+            anchor: s.anchor,
+            image: s.image,
+          }));
+          const packed = packSpriteAtlas(sprites, {
+            imageName: `${asset.id}_turntable_${frames}.png`,
+            tilePreset: asset.tilePreset,
+          });
+          const pngPath = path.join(targetDir, `${asset.id}_turntable_${frames}.png`);
+          const jsonPath = path.join(targetDir, `${asset.id}_turntable_${frames}.atlas.json`);
+          await fs.writeFile(pngPath, encodePNG(packed.sheet));
+          await fs.writeFile(jsonPath, `${JSON.stringify(packed.atlas, null, 2)}\n`, "utf8");
+          outputs.push(pngPath, jsonPath);
+        } else {
+          for (let i = 0; i < seq.length; i++) {
+            const outPath = path.join(targetDir, `${asset.id}_a${String(i).padStart(3, "0")}_${Math.round(seq[i].yawDeg)}deg.png`);
+            await fs.writeFile(outPath, encodePNG(seq[i].image));
+            outputs.push(outPath);
+          }
+        }
+
+        // Return an 8-view contact sheet preview image so agents can inspect the turntable immediately
+        const step = Math.max(1, Math.floor(seq.length / Math.min(8, seq.length)));
+        const sampleImages: RGBAImage[] = [];
+        for (let i = 0; i < seq.length && sampleImages.length < 8; i += step) {
+          sampleImages.push(seq[i].image);
+        }
+        const previewPng = encodePNG(composeContactSheet(sampleImages));
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                { id: asset.id, animation: clipName, frames, pitchDeg, format, outputs },
+                null,
+                2,
+              ),
+            },
+            {
+              type: "image",
+              data: previewPng.toString("base64"),
+              mimeType: "image/png",
             },
           ],
         };

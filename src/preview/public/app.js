@@ -1,6 +1,9 @@
+import { VoxelTurntableViewport } from "./turntable.js";
+
 const DIRS = ["se", "sw", "nw", "ne"];
 
 const state = {
+  activeTab: "turntable",
   assets: [],
   selectedAsset: "",
   selectedAnim: "",
@@ -12,6 +15,9 @@ const state = {
   outlineOverride: "",
   showGrid: true,
   showAnchor: true,
+  ttFrame: 0,
+  ttFrameCount: 1,
+  ttPlayingAnim: false,
   room: null,
   sandboxAsset: "desk-dev-dual",
   sandboxAnim: "sit_type",
@@ -23,23 +29,84 @@ const state = {
 
 const el = (id) => document.getElementById(id);
 
+// --- 360° Smooth WebGL2 Turntable Viewport ---
+let lastHudText = "";
+const turntable = new VoxelTurntableViewport(el("turntable-canvas"), (info) => {
+  const modeTag = turntable.pixelMode === "pixelart" ? `PIXELART (${info.fboW}×${info.fboH})` : "3D SMOOTH";
+  const text = `Yaw ${info.yawDeg.toFixed(1)}° · Pitch ${info.pitchDeg.toFixed(1)}° · ${modeTag}`;
+  if (text !== lastHudText) {
+    lastHudText = text;
+    el("tt-hud").textContent = text;
+  }
+});
+
+const meshCache = new Map();
+
+async function loadTurntableMesh(forceRefresh = false) {
+  if (!state.selectedAsset) return;
+  if (!turntable.supported) {
+    el("tt-meta").textContent = "WebGL2 is unavailable in this browser.\nUse 2:1 Iso Inspector or Export 360° GIF.";
+    return;
+  }
+  const key = `${state.selectedAsset}|${state.selectedAnim}|${state.ttFrame}|${state.cacheBust}`;
+  let data = !forceRefresh ? meshCache.get(key) : null;
+  if (!data) {
+    const animQuery = state.selectedAnim ? `&anim=${encodeURIComponent(state.selectedAnim)}` : "";
+    const url = `/api/mesh/${encodeURIComponent(state.selectedAsset)}?frame=${state.ttFrame}${animQuery}&t=${state.cacheBust}`;
+    const res = await fetch(url);
+    if (!res.ok) return;
+    data = await res.json();
+    if (meshCache.size > 64) meshCache.clear();
+    meshCache.set(key, data);
+  }
+  state.ttFrameCount = data.frameCount || 1;
+  turntable.uploadMesh(data.mesh);
+  const b = data.mesh.bounds;
+  el("tt-meta").textContent = [
+    `id: ${data.id}`,
+    `anim: ${data.anim} (${data.frameIndex + 1}/${data.frameCount})`,
+    `faces: ${data.mesh.faceCount} (${data.mesh.triangleCount} tris)`,
+    `size: ${(b.maxX - b.minX).toFixed(0)}×${(b.maxY - b.minY).toFixed(0)}×${(b.maxZ - b.minZ).toFixed(0)} vox`,
+  ].join("\n");
+}
+
+function setActiveTab(tab) {
+  state.activeTab = tab;
+  for (const name of ["turntable", "inspector", "sandbox"]) {
+    el(`tab-${name}`).classList.toggle("active", name === tab);
+    el(`panel-${name}`).classList.toggle("active", name === tab);
+  }
+  if (tab === "turntable") {
+    turntable.start();
+    loadTurntableMesh();
+  } else {
+    turntable.stop();
+    if (tab === "inspector") drawInspector();
+    if (tab === "sandbox") drawSandbox();
+  }
+}
+
 async function fetchAssets() {
   const res = await fetch("/api/assets");
   const data = await res.json();
   state.assets = data.assets || [];
   const select = el("asset-select");
+  const ttSelect = el("tt-asset-select");
   const sbSelect = el("sandbox-asset-select");
   select.innerHTML = "";
+  ttSelect.innerHTML = "";
   sbSelect.innerHTML = "";
   for (const a of state.assets) {
-    const opt = new Option(`${a.id} (${a.footprintTiles[0]}x${a.footprintTiles[1]})`, a.id);
-    select.add(opt);
-    sbSelect.add(opt.cloneNode(true));
+    const label = `${a.id} (${a.footprintTiles[0]}x${a.footprintTiles[1]})`;
+    select.add(new Option(label, a.id));
+    ttSelect.add(new Option(label, a.id));
+    sbSelect.add(new Option(label, a.id));
   }
   if (!state.selectedAsset && state.assets.length > 0) {
     state.selectedAsset = state.assets.find((a) => a.id === "agent-dev")?.id ?? state.assets[0].id;
   }
   select.value = state.selectedAsset;
+  ttSelect.value = state.selectedAsset;
   sbSelect.value = state.sandboxAsset;
   syncAnimOptions();
 }
@@ -47,15 +114,22 @@ async function fetchAssets() {
 function syncAnimOptions() {
   const meta = state.assets.find((a) => a.id === state.selectedAsset);
   const animSel = el("anim-select");
+  const ttAnimSel = el("tt-anim-select");
   animSel.innerHTML = "";
+  ttAnimSel.innerHTML = "";
   const anims = meta?.animations || [];
   if (anims.length === 0) {
     animSel.add(new Option("default", ""));
+    ttAnimSel.add(new Option("default", ""));
     state.selectedAnim = "";
   } else {
-    for (const a of anims) animSel.add(new Option(a, a));
+    for (const a of anims) {
+      animSel.add(new Option(a, a));
+      ttAnimSel.add(new Option(a, a));
+    }
     if (!anims.includes(state.selectedAnim)) state.selectedAnim = anims[0];
     animSel.value = state.selectedAnim;
+    ttAnimSel.value = state.selectedAnim;
   }
 }
 
@@ -103,7 +177,6 @@ async function drawInspector() {
     ctx.strokeStyle = "rgba(56, 189, 248, 0.35)";
     ctx.lineWidth = 1;
     const [fx, fy] = fp;
-    // Bottom diamond corner is at (cx, cy)
     const topX = cx - (fx - fy) * stepX * z;
     const topY = cy - (fx + fy) * stepY * z;
     const rightX = topX + fx * stepX * z;
@@ -182,31 +255,121 @@ async function drawSandbox() {
 }
 
 // Tabs
-el("tab-inspector").onclick = () => {
-  el("tab-inspector").classList.add("active");
-  el("tab-sandbox").classList.remove("active");
-  el("panel-inspector").classList.add("active");
-  el("panel-sandbox").classList.remove("active");
-  drawInspector();
+el("tab-turntable").onclick = () => setActiveTab("turntable");
+el("tab-inspector").onclick = () => setActiveTab("inspector");
+el("tab-sandbox").onclick = () => setActiveTab("sandbox");
+
+// Turntable controls
+el("tt-asset-select").onchange = (e) => {
+  state.selectedAsset = e.target.value;
+  el("asset-select").value = state.selectedAsset;
+  state.frame = 0;
+  state.ttFrame = 0;
+  syncAnimOptions();
+  loadTurntableMesh();
 };
-el("tab-sandbox").onclick = () => {
-  el("tab-sandbox").classList.add("active");
-  el("tab-inspector").classList.remove("active");
-  el("panel-sandbox").classList.add("active");
-  el("panel-inspector").classList.remove("active");
-  drawSandbox();
+el("tt-anim-select").onchange = (e) => {
+  state.selectedAnim = e.target.value;
+  el("anim-select").value = state.selectedAnim;
+  state.frame = 0;
+  state.ttFrame = 0;
+  loadTurntableMesh();
+};
+el("btn-mode-pixelart").onclick = () => {
+  turntable.pixelMode = "pixelart";
+  el("btn-mode-pixelart").classList.add("active");
+  el("btn-mode-3d").classList.remove("active");
+};
+el("btn-mode-3d").onclick = () => {
+  turntable.pixelMode = "3d";
+  el("btn-mode-3d").classList.add("active");
+  el("btn-mode-pixelart").classList.remove("active");
+};
+el("tt-px-range").oninput = (e) => {
+  turntable.pixelSize = Number(e.target.value);
+  el("tt-px-val").textContent = String(turntable.pixelSize);
+};
+el("tt-zoom-range").oninput = (e) => {
+  turntable.zoom = Number(e.target.value) / 100;
+  el("tt-zoom-val").textContent = turntable.zoom.toFixed(1);
+};
+el("tt-speed-range").oninput = (e) => {
+  turntable.spinSpeed = Number(e.target.value);
+  el("tt-speed-val").textContent = String(turntable.spinSpeed);
+};
+el("btn-tt-spin").onclick = () => {
+  turntable.autoSpin = !turntable.autoSpin;
+  el("btn-tt-spin").textContent = turntable.autoSpin ? "⏸ Stop Spin" : "▶ Spin 360°";
+};
+
+let ttAnimTimer = null;
+el("btn-tt-anim").onclick = () => {
+  state.ttPlayingAnim = !state.ttPlayingAnim;
+  el("btn-tt-anim").textContent = state.ttPlayingAnim ? "⏸ Pause Clip" : "▶ Play Clip";
+  if (ttAnimTimer) clearInterval(ttAnimTimer);
+  if (state.ttPlayingAnim) {
+    ttAnimTimer = setInterval(() => {
+      state.ttFrame = (state.ttFrame + 1) % Math.max(1, state.ttFrameCount);
+      loadTurntableMesh();
+    }, 280);
+  }
+};
+el("chk-tt-outline").onchange = (e) => {
+  turntable.outline = e.target.checked;
+};
+el("chk-tt-shading").onchange = (e) => {
+  turntable.shading = e.target.checked;
+};
+el("tt-light-select").onchange = (e) => {
+  turntable.lightLock = e.target.value;
+};
+el("tt-bg-select").onchange = (e) => {
+  turntable.bgTheme = e.target.value;
+};
+el("btn-tt-reset").onclick = () => {
+  turntable.resetView();
+  el("tt-zoom-range").value = "100";
+  el("tt-zoom-val").textContent = "1.0";
+};
+
+for (const btn of document.querySelectorAll(".snap-btn[data-yaw]")) {
+  btn.addEventListener("click", () => {
+    for (const b of document.querySelectorAll(".snap-btn[data-yaw]")) b.classList.remove("active");
+    btn.classList.add("active");
+    turntable.autoSpin = false;
+    el("btn-tt-spin").textContent = "▶ Spin 360°";
+    turntable.snapTo(Number(btn.dataset.yaw), Number(btn.dataset.pitch));
+  });
+}
+
+el("btn-tt-export-gif").onclick = () => {
+  if (!state.selectedAsset) return;
+  const animQ = state.selectedAnim ? `&anim=${encodeURIComponent(state.selectedAnim)}` : "";
+  const outlineQ = turntable.outline ? "silhouette" : "none";
+  const shadingQ = turntable.shading ? "1" : "0";
+  const pitch = Math.round(turntable.pitchDeg);
+  const url = `/api/turntable/${encodeURIComponent(state.selectedAsset)}?frames=36&pitch=${pitch}&fps=18&outline=${outlineQ}&shading=${shadingQ}&light=${turntable.lightLock}${animQ}&frame=${state.ttFrame}`;
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${state.selectedAsset}-360.gif`;
+  a.click();
+  el("live-status").textContent = `Exporting ${state.selectedAsset}-360.gif...`;
 };
 
 // Inspector controls
 el("asset-select").onchange = (e) => {
   state.selectedAsset = e.target.value;
+  el("tt-asset-select").value = state.selectedAsset;
   state.frame = 0;
+  state.ttFrame = 0;
   syncAnimOptions();
   drawInspector();
 };
 el("anim-select").onchange = (e) => {
   state.selectedAnim = e.target.value;
+  el("tt-anim-select").value = state.selectedAnim;
   state.frame = 0;
+  state.ttFrame = 0;
   drawInspector();
 };
 el("btn-rot-l").onclick = () => {
@@ -375,6 +538,25 @@ el("sandbox-canvas").addEventListener("contextmenu", (evt) => {
 // Keyboard shortcuts
 window.addEventListener("keydown", (e) => {
   if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+  if (state.activeTab === "turntable") {
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      turntable.snapTo(turntable.yawDeg - 15, turntable.pitchDeg);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      turntable.snapTo(turntable.yawDeg + 15, turntable.pitchDeg);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      turntable.snapTo(turntable.yawDeg, turntable.pitchDeg + 10);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      turntable.snapTo(turntable.yawDeg, turntable.pitchDeg - 10);
+    } else if (e.key === " ") {
+      e.preventDefault();
+      el("btn-tt-spin").click();
+    }
+    return;
+  }
   if (e.key === "q" || e.key === "Q") {
     state.dirIdx = (state.dirIdx + 3) % 4;
     drawInspector();
@@ -391,12 +573,14 @@ window.addEventListener("keydown", (e) => {
 const sse = new EventSource("/api/events");
 sse.addEventListener("reload", async () => {
   state.cacheBust = Date.now();
+  meshCache.clear();
   el("live-status").textContent = `Reloaded ${new Date().toLocaleTimeString()}`;
   await fetchAssets();
+  if (state.activeTab === "turntable") await loadTurntableMesh(true);
   await drawInspector();
   await drawSandbox();
 });
 
 await fetchAssets();
-await drawInspector();
+setActiveTab("turntable");
 await fetchRoom();

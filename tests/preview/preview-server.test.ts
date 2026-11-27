@@ -112,4 +112,42 @@ describe("local web preview server", () => {
     expect(saveRes.status).toBe(200);
     expect(await fs.stat(path.join(tmpDir, "custom.room.json"))).toBeDefined();
   });
+
+  it("serves 360° turntable module, /api/mesh/:id, and /api/turntable/:id GIF export with strict validation", async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "pixcel-turntable-"));
+    const srv = await startPreviewServer({ rootDir: tmpDir, port: 0 });
+    closeFn = srv.close;
+
+    const jsRes = await fetch(`${srv.url}/turntable.js`);
+    expect(jsRes.status).toBe(200);
+    expect(jsRes.headers.get("content-type")).toContain("javascript");
+    const jsText = await jsRes.text();
+    expect(jsText).toContain("VoxelTurntableViewport");
+
+    const meshRes = await fetch(`${srv.url}/api/mesh/agent-dev?anim=walk&frame=1`);
+    expect(meshRes.status).toBe(200);
+    const meshData = (await meshRes.json()) as {
+      id: string;
+      anim: string;
+      frameCount: number;
+      mesh: { faceCount: number; triangleCount: number; positionsB64: string };
+    };
+    expect(meshData.id).toBe("agent-dev");
+    expect(meshData.anim).toBe("walk");
+    expect(meshData.frameCount).toBeGreaterThanOrEqual(4);
+    expect(meshData.mesh.faceCount).toBeGreaterThan(50);
+    expect(meshData.mesh.triangleCount).toBe(meshData.mesh.faceCount * 2);
+
+    const badMesh = await fetch(`${srv.url}/api/mesh/..%2Fsecret`);
+    expect(badMesh.status).toBe(400);
+
+    const gifRes = await fetch(`${srv.url}/api/turntable/agent-dev?frames=8&pitch=30&fps=12`);
+    expect(gifRes.status).toBe(200);
+    expect(gifRes.headers.get("content-type")).toBe("image/gif");
+    const gifBuf = Buffer.from(await gifRes.arrayBuffer());
+    expect(gifBuf.subarray(0, 6).toString("ascii")).toBe("GIF89a");
+
+    const badGif = await fetch(`${srv.url}/api/turntable/agent-dev?frames=999`);
+    expect(badGif.status).toBe(400);
+  });
 });
