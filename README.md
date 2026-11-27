@@ -8,8 +8,8 @@
 
 ![Node](https://img.shields.io/badge/node-%E2%89%A5%2022-3c873a?style=flat-square)
 ![TypeScript](https://img.shields.io/badge/TypeScript-ESM-3178c6?style=flat-square)
-![MCP](https://img.shields.io/badge/MCP-11%20tools-8b5cf6?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-40%20passing-22c55e?style=flat-square)
+![MCP](https://img.shields.io/badge/MCP-12%20tools-8b5cf6?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-47%20passing-22c55e?style=flat-square)
 ![Native deps](https://img.shields.io/badge/native%20deps-none-64748b?style=flat-square)
 
 <img src="docs/images/office-hero.gif" alt="An isometric pixel-art office at night: two workstations, server racks, a whiteboard, a conference table and five agents at work" width="100%">
@@ -31,12 +31,12 @@ It ships as a TypeScript engine, a CLI (`pixcel`), an MCP server and a local web
 |---|---|
 | 🧱 **Voxel DSL** | Write assets as `.pixcel.json`: `box`, `hollowBox`, `cylinder`, `slope`, `line`, `voxel`, `mirror`, plus pixel decals for screens and signs |
 | ✂️ **Carve from 2D** | Turn 1–6 orthographic PNG views (front, side, top…) into an editable voxel model |
-| 🧭 **Four directions** | `se`, `sw`, `nw`, `ne` from one model, as exact 90° turns with stable anchors |
+| 🧭 **Four directions & 360°** | Exact 90° tile-locked turns (`se`, `sw`, `nw`, `ne`) plus smooth 360° orthographic WebGL2 turntable and 8/16-dir export |
 | 💡 **Pixel-art lighting** | Three-face shading ramps, voxel ambient occlusion, 1px outlines and an emissive glow pass |
 | 🧍 **Rigged characters** | Parametric chibi agents with eight animation clips, built from a one-line spec |
 | 🏢 **Room compositor** | Lay out floors, walls, furniture and characters in `.room.json`, sorted by topological depth |
-| 📦 **Game-ready export** | PNG, sprite sheet, GIF, sprite stack, OBJ+MTL, and a TexturePacker atlas with isometric metadata |
-| 🤖 **Built for agents** | 11 MCP tools that return rendered previews, so an agent can look at its own work and fix it |
+| 📦 **Game-ready export** | PNG, sprite sheet, 360° GIF, sprite stack, OBJ+MTL, and a TexturePacker atlas with isometric metadata |
+| 🤖 **Built for agents** | 12 MCP tools that return rendered previews, so an agent can look at its own work and fix it |
 
 ## One model, four directions
 
@@ -55,6 +55,24 @@ drifts between facings.
 <td align="center"><code>sw</code></td>
 <td align="center"><code>nw</code></td>
 <td align="center"><code>ne</code></td>
+</tr>
+</table>
+
+## Smooth 360° turntable
+
+Need arbitrary angles, 8/16-direction sprites, or a spinning showcase? `pixcel preview` opens a
+60 FPS WebGL2 orthographic viewport where you can drag to orbit 360° smoothly, toggle
+**PIXELART ↔ 3D SMOOTH**, snap to 8 isometric directions or flat orthographic views (`FR`/`RS`/`BK`/`LS`/`TOP`),
+play character clips while spinning, and export a 360° GIF in one click.
+
+<table>
+<tr>
+<td align="center"><img src="docs/images/turntable-agent-dev.gif" alt="agent-dev spinning 360 degrees" width="210"></td>
+<td align="center"><img src="docs/images/turntable-desk.gif" alt="desk-dev-dual spinning 360 degrees" width="260"></td>
+</tr>
+<tr>
+<td align="center"><code>pixcel turntable agent-dev --frames 36 --format gif</code></td>
+<td align="center"><code>pixcel turntable desk-dev-dual --frames 36 --format gif</code></td>
 </tr>
 </table>
 
@@ -130,7 +148,11 @@ pixcel render assets/office-starter/desk-dev-dual.pixcel.json --out out/desk
 pixcel create-character --id agent-nova --hair ponytail --outfit blazer --glasses
 pixcel render assets/characters/agent-nova.pixcel.json --animation walk --directions se --format gif --out out/nova
 
-# Browse and compose assets in the browser
+# Export a smooth 360° turntable GIF or 16-direction sprite atlas
+pixcel turntable agent-dev --frames 36 --pitch 30 --fps 18 --format gif --out out/turntable
+pixcel turntable agent-dev --frames 16 --format atlas --out out/turntable
+
+# Open the 60 FPS WebGL2 360° Turntable, 2:1 Iso Inspector & Office Sandbox
 pixcel preview
 ```
 
@@ -201,10 +223,14 @@ flowchart LR
     A2["Carver<br/>2D views → 3D"] --> G
     A3["Character builder<br/>rig + clips"] --> G
     G["Voxel grid"] --> R["Rasterizer<br/>2:1 iso G-buffer"]
+    G --> M["Exposed-face mesh<br/>per-vertex AO"]
+    M --> T["360° Turntable<br/>WebGL2 & CPU ortho"]
     R --> P["Post-process<br/>shade · AO · outline · glow"]
     P --> E1["PNG / sprite sheet"]
     P --> E2["Atlas JSON"]
     P --> E3["GIF"]
+    T --> E3
+    T --> E2
     P --> RC["Room compositor<br/>depth sort"]
     G --> E4["Sprite stack · OBJ+MTL"]
 ```
@@ -255,6 +281,9 @@ pixcel create-character --id <name> [--hair short|spiky|bob|ponytail|parted|hood
 pixcel render <asset> [--out dir] [--directions se,sw,nw,ne]
                       [--animation idle|walk|sit_type|inspect|talk|assign|rest_coffee|rest_sleep|all]
                       [--format png|atlas|gif|stack|obj] [--emissive baked|split|both]
+pixcel turntable <asset> [--out dir] [--frames 36] [--pitch 30] [--yaw deg] [--fps 18]
+                         [--format gif|atlas|png] [--animation idle] [--outline silhouette|none]
+                         [--light camera|world]
 pixcel carve --front front.png [--side side.png] [--top top.png] --id <name> --out <asset.pixcel.json>
              [--palette office-night] [--depth 4]
 pixcel pack <asset-or-dir...> --out <dir> [--name office-atlas] [--emissive both]
@@ -280,6 +309,7 @@ claude mcp add pixcel --scope user -- node /absolute/path/to/iherk-pixcel/dist/c
 | `carve_from_views` | Carve a voxel model from 1–6 orthographic PNG views |
 | `create_character` | Build a rigged chibi agent with all eight clips |
 | `render_asset` | Render to PNG, atlas, GIF, sprite stack or OBJ+MTL, with an inline preview image |
+| `render_turntable` | Render 8/16-direction sprites or a smooth 360° turntable GIF / atlas at any pitch |
 | `render_room` | Composite a `.room.json` layout into one PNG |
 | `pack_atlas` | Pack several assets into one sheet and `.atlas.json` |
 | `list_palettes` · `get_palette` | Inspect the available colour palettes |
@@ -291,17 +321,17 @@ correct its own model without a human in the loop.
 
 ```text
 src/
-  core/         voxel grid, DSL compiler, carver, rasterizer, post-process,
-                character builder, room compositor, exporters
+  core/         voxel grid, DSL compiler, carver, 2:1 iso rasterizer, 360° turntable
+                mesh builder & rasterizer, post-process, character builder, room compositor, exporters
   cli/          the `pixcel` command
-  mcp/          MCP server
-  preview/      local web preview (Canvas 2D)
+  mcp/          MCP server (12 tools)
+  preview/      local web preview (WebGL2 360° Turntable + Canvas 2D Inspector & Sandbox)
 assets/
   office-starter/   12 furniture, floor and wall assets + sample-office.room.json
   characters/       5 starter agents
   palettes/         office-night, office-day
 docs/           design specs and README images
-tests/          vitest suites (40 tests)
+tests/          vitest suites (47 tests)
 ```
 
 ```bash
