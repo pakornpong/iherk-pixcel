@@ -50,6 +50,9 @@ async function loadTurntableMesh(forceRefresh = false) {
     return;
   }
   const key = `${state.selectedAsset}|${state.selectedAnim}|${state.ttFrame}|${state.cacheBust}`;
+  // Captured before the await: building it afterwards reads live state, so an asset or clip
+  // switch mid-fetch would file the old mesh under the new key and freeze the new asset's framing.
+  const framingKey = `${state.selectedAsset}|${state.selectedAnim}|${state.cacheBust}`;
   let data = !forceRefresh ? meshCache.get(key) : null;
   if (!data) {
     const animQuery = state.selectedAnim ? `&anim=${encodeURIComponent(state.selectedAnim)}` : "";
@@ -61,7 +64,7 @@ async function loadTurntableMesh(forceRefresh = false) {
     meshCache.set(key, data);
   }
   state.ttFrameCount = data.frameCount || 1;
-  turntable.uploadMesh(data.mesh, `${state.selectedAsset}|${state.selectedAnim}|${state.cacheBust}`);
+  turntable.uploadMesh(data.mesh, framingKey);
   const b = data.mesh.bounds;
   el("tt-meta").textContent = [
     `id: ${data.id}`,
