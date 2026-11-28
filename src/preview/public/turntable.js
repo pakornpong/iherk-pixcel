@@ -494,6 +494,23 @@ export class VoxelTurntableViewport {
     this.snapTo(315, 30);
   }
 
+  // The camera actually rendered (and shown in the HUD / used by GIF export). Never mutates this.*.
+  getRenderCamera() {
+    return computeRenderCamera({
+      yawDeg: this.yawDeg,
+      pitchDeg: this.pitchDeg,
+      panX: this.panX,
+      panY: this.panY,
+      zoom: this.zoom,
+      pixelSnap: this.pixelSnap,
+      snapStepDeg: this.snapStepDeg,
+      pixelMode: this.pixelMode,
+      radius: this.bounds.radius,
+      fboW: this.fboW,
+      fboH: this.fboH,
+    });
+  }
+
   uploadMesh(serialized) {
     if (!this.supported) return;
     const gl = this.gl;
@@ -613,19 +630,7 @@ export class VoxelTurntableViewport {
     gl.clearDepth(1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    const view = computeRenderCamera({
-      yawDeg: this.yawDeg,
-      pitchDeg: this.pitchDeg,
-      panX: this.panX,
-      panY: this.panY,
-      zoom: this.zoom,
-      pixelSnap: this.pixelSnap,
-      snapStepDeg: this.snapStepDeg,
-      pixelMode: this.pixelMode,
-      radius: this.bounds.radius,
-      fboW: this.fboW,
-      fboH: this.fboH,
-    });
+    const view = this.getRenderCamera();
 
     if (this.vertexCount > 0) {
       const cam = computeCameraBasis(view.yawDeg, view.pitchDeg);

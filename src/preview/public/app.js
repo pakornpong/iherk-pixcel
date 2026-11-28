@@ -33,7 +33,8 @@ const el = (id) => document.getElementById(id);
 let lastHudText = "";
 const turntable = new VoxelTurntableViewport(el("turntable-canvas"), (info) => {
   const modeTag = turntable.pixelMode === "pixelart" ? `PIXELART (${info.fboW}×${info.fboH})` : "3D SMOOTH";
-  const text = `Yaw ${info.yawDeg.toFixed(1)}° · Pitch ${info.pitchDeg.toFixed(1)}° · ${modeTag}`;
+  const ppv = Number.isFinite(info.pixelsPerVoxel) ? ` · ${+info.pixelsPerVoxel.toFixed(2)} px/vox` : "";
+  const text = `Yaw ${info.yawDeg.toFixed(1)}° · Pitch ${info.pitchDeg.toFixed(1)}° · ${modeTag}${ppv}`;
   if (text !== lastHudText) {
     lastHudText = text;
     el("tt-hud").textContent = text;
@@ -355,7 +356,7 @@ el("btn-tt-export-gif").onclick = () => {
   const animQ = state.selectedAnim ? `&anim=${encodeURIComponent(state.selectedAnim)}` : "";
   const outlineQ = turntable.outline ? "silhouette" : "none";
   const shadingQ = turntable.shading ? "1" : "0";
-  const pitch = Math.round(turntable.pitchDeg);
+  const pitch = Math.round(turntable.getRenderCamera().pitchDeg);
   const url = `/api/turntable/${encodeURIComponent(state.selectedAsset)}?frames=36&pitch=${pitch}&fps=18&outline=${outlineQ}&shading=${shadingQ}&light=${turntable.lightLock}${animQ}&frame=${state.ttFrame}`;
   const a = document.createElement("a");
   a.href = url;
