@@ -22,6 +22,36 @@ export function computeCameraBasis(yawDeg, pitchDeg) {
   };
 }
 
+export function snapAngle(deg, stepDeg) {
+  if (!Number.isFinite(deg) || !Number.isFinite(stepDeg) || stepDeg <= 0) return deg;
+  return Math.round(deg / stepDeg) * stepDeg;
+}
+
+export function snapViewScale(halfH, fboH) {
+  const usable = (v) => Number.isFinite(v) && v > 0;
+  let h = usable(halfH) ? halfH : 1;
+  const f = usable(fboH) ? fboH : 1;
+  let ppv = f / (2 * h);
+  if (!usable(ppv)) {
+    h = 1;
+    ppv = f / 2;
+  }
+  let snapped;
+  if (ppv >= 1) {
+    snapped = Math.round(ppv);
+  } else {
+    const n = Math.min(1e9, Math.max(1, Math.round(1 / ppv)));
+    snapped = 1 / n;
+  }
+  if (!usable(snapped)) snapped = 1;
+  return { halfH: f / (2 * snapped), worldPerPixel: 1 / snapped, pixelsPerVoxel: snapped };
+}
+
+export function snapPan(pan, worldPerPixel) {
+  if (!Number.isFinite(worldPerPixel) || worldPerPixel <= 0) return pan;
+  return Math.round(pan / worldPerPixel) * worldPerPixel;
+}
+
 function normalize3(v) {
   const l = Math.hypot(v[0], v[1], v[2]) || 1;
   return [v[0] / l, v[1] / l, v[2] / l];
