@@ -328,6 +328,8 @@ export class VoxelTurntableViewport {
 
     // Mesh state
     this.bounds = { centerX: 16, centerY: 16, centerZ: 14, radius: 22 };
+    this.framingRadius = this.bounds.radius;
+    this.framingKey = undefined;
     this.vertexCount = 0;
     this.faceCount = 0;
     this.meshCache = new Map();
@@ -505,16 +507,22 @@ export class VoxelTurntableViewport {
       pixelSnap: this.pixelSnap,
       snapStepDeg: this.snapStepDeg,
       pixelMode: this.pixelMode,
-      radius: this.bounds.radius,
+      radius: this.framingRadius,
       fboW: this.fboW,
       fboH: this.fboH,
     });
   }
 
-  uploadMesh(serialized) {
+  // framingKey identifies the asset/clip; framing radius is re-derived only when it changes, so
+  // per-frame bounds changes during clip playback do not flip the integer pixels-per-voxel.
+  uploadMesh(serialized, framingKey) {
     if (!this.supported) return;
     const gl = this.gl;
     this.bounds = serialized.bounds;
+    if (framingKey === undefined || framingKey !== this.framingKey || !(this.framingRadius > 0)) {
+      this.framingKey = framingKey;
+      this.framingRadius = serialized.bounds.radius;
+    }
     this.faceCount = serialized.faceCount;
     this.vertexCount = serialized.triangleCount * 3;
 

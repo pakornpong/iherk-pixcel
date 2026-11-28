@@ -61,7 +61,7 @@ async function loadTurntableMesh(forceRefresh = false) {
     meshCache.set(key, data);
   }
   state.ttFrameCount = data.frameCount || 1;
-  turntable.uploadMesh(data.mesh);
+  turntable.uploadMesh(data.mesh, `${state.selectedAsset}|${state.selectedAnim}|${state.cacheBust}`);
   const b = data.mesh.bounds;
   el("tt-meta").textContent = [
     `id: ${data.id}`,
