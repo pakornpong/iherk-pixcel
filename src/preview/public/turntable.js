@@ -22,6 +22,8 @@ export function computeCameraBasis(yawDeg, pitchDeg) {
   };
 }
 
+export const DEFAULT_SNAP_STEP_DEG = 5;
+
 export function snapAngle(deg, stepDeg) {
   if (!Number.isFinite(deg) || !Number.isFinite(stepDeg) || stepDeg <= 0) return deg;
   return Math.round(deg / stepDeg) * stepDeg;
@@ -29,13 +31,10 @@ export function snapAngle(deg, stepDeg) {
 
 export function snapViewScale(halfH, fboH) {
   const usable = (v) => Number.isFinite(v) && v > 0;
-  let h = usable(halfH) ? halfH : 1;
+  const h = usable(halfH) ? halfH : 1;
   const f = usable(fboH) ? fboH : 1;
   let ppv = f / (2 * h);
-  if (!usable(ppv)) {
-    h = 1;
-    ppv = f / 2;
-  }
+  if (!usable(ppv)) ppv = f / 2;
   let snapped;
   if (ppv >= 1) {
     snapped = Math.round(ppv);
@@ -43,13 +42,33 @@ export function snapViewScale(halfH, fboH) {
     const n = Math.min(1e9, Math.max(1, Math.round(1 / ppv)));
     snapped = 1 / n;
   }
-  if (!usable(snapped)) snapped = 1;
   return { halfH: f / (2 * snapped), worldPerPixel: 1 / snapped, pixelsPerVoxel: snapped };
 }
 
 export function snapPan(pan, worldPerPixel) {
   if (!Number.isFinite(worldPerPixel) || worldPerPixel <= 0) return pan;
   return Math.round(pan / worldPerPixel) * worldPerPixel;
+}
+
+export function computeRenderCamera(state) {
+  const { zoom, radius, fboW, fboH, pixelMode } = state;
+  const snapping = state.pixelSnap && pixelMode === "pixelart";
+  let yawDeg = state.yawDeg;
+  let pitchDeg = state.pitchDeg;
+  let halfH = (radius * 1.32) / zoom;
+  let panX = state.panX;
+  let panY = state.panY;
+  let pixelsPerVoxel = fboH / (2 * halfH);
+  if (snapping) {
+    yawDeg = snapAngle(yawDeg, state.yawSnapDeg);
+    pitchDeg = Math.max(-89, Math.min(89, snapAngle(pitchDeg, state.yawSnapDeg)));
+    const scale = snapViewScale(halfH, fboH);
+    halfH = scale.halfH;
+    pixelsPerVoxel = scale.pixelsPerVoxel;
+    panX = snapPan(panX, scale.worldPerPixel);
+    panY = snapPan(panY, scale.worldPerPixel);
+  }
+  return { yawDeg, pitchDeg, halfW: halfH * (fboW / fboH), halfH, panX, panY, pixelsPerVoxel };
 }
 
 function normalize3(v) {
@@ -298,6 +317,8 @@ export class VoxelTurntableViewport {
     this.panY = 0;
     this.pixelMode = "pixelart"; // "pixelart" | "3d"
     this.pixelSize = 4; // Display pixels per logical pixel-art pixel
+    this.pixelSnap = true; // Snap the rendered camera to the pixel grid (pixelart mode only)
+    this.yawSnapDeg = DEFAULT_SNAP_STEP_DEG;
     this.outline = true;
     this.shading = true;
     this.lightLock = "camera"; // "camera" | "world"
@@ -592,8 +613,22 @@ export class VoxelTurntableViewport {
     gl.clearDepth(1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    const view = computeRenderCamera({
+      yawDeg: this.yawDeg,
+      pitchDeg: this.pitchDeg,
+      panX: this.panX,
+      panY: this.panY,
+      zoom: this.zoom,
+      pixelSnap: this.pixelSnap,
+      yawSnapDeg: this.yawSnapDeg,
+      pixelMode: this.pixelMode,
+      radius: this.bounds.radius,
+      fboW: this.fboW,
+      fboH: this.fboH,
+    });
+
     if (this.vertexCount > 0) {
-      const cam = computeCameraBasis(this.yawDeg, this.pitchDeg);
+      const cam = computeCameraBasis(view.yawDeg, view.pitchDeg);
       const lightDir =
         this.lightLock === "world"
           ? normalize3([-0.45, 0.35, 0.82])
@@ -603,17 +638,13 @@ export class VoxelTurntableViewport {
               -0.42 * cam.right[2] + 0.68 * cam.up[2] + 0.60 * cam.forward[2],
             ]);
 
-      const aspect = this.fboW / this.fboH;
-      const halfH = (this.bounds.radius * 1.32) / this.zoom;
-      const halfW = halfH * aspect;
-
       gl.useProgram(this.geomProg);
       gl.uniform3f(this.uGeom.uCenter, this.bounds.centerX, this.bounds.centerY, this.bounds.centerZ);
       gl.uniform3fv(this.uGeom.uCamRight, cam.right);
       gl.uniform3fv(this.uGeom.uCamUp, cam.up);
       gl.uniform3fv(this.uGeom.uCamForward, cam.forward);
-      gl.uniform2f(this.uGeom.uHalfView, halfW, halfH);
-      gl.uniform2f(this.uGeom.uPan, this.panX, this.panY);
+      gl.uniform2f(this.uGeom.uHalfView, view.halfW, view.halfH);
+      gl.uniform2f(this.uGeom.uPan, view.panX, view.panY);
       gl.uniform1f(this.uGeom.uDepthScale, 1.0 / (this.bounds.radius * 2.5 + 1.0));
       gl.uniform3fv(this.uGeom.uLightDir, lightDir);
       gl.uniform1f(this.uGeom.uShading, this.shading ? 1.0 : 0.0);
@@ -646,8 +677,9 @@ export class VoxelTurntableViewport {
 
     if (this.onHudUpdate) {
       this.onHudUpdate({
-        yawDeg: ((this.yawDeg % 360) + 360) % 360,
-        pitchDeg: this.pitchDeg,
+        yawDeg: ((view.yawDeg % 360) + 360) % 360,
+        pitchDeg: view.pitchDeg,
+        pixelsPerVoxel: view.pixelsPerVoxel,
         fboW: this.fboW,
         fboH: this.fboH,
         faceCount: this.faceCount,
