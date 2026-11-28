@@ -61,9 +61,10 @@ drifts between facings.
 ## Smooth 360° turntable
 
 Need arbitrary angles, 8/16-direction sprites, or a spinning showcase? `pixcel preview` opens a
-60 FPS WebGL2 orthographic viewport where you can drag to orbit 360° smoothly, toggle
+60 FPS WebGL2 orthographic viewport where you can drag to orbit 360° (stepped 5° by default so the low-res render stays crisp), toggle
 **PIXELART ↔ 3D SMOOTH**, snap to 8 isometric directions or flat orthographic views (`FR`/`RS`/`BK`/`LS`/`TOP`),
 play character clips while spinning, and export a 360° GIF in one click.
+**Pixel Snap** (on by default) snaps the camera angle, zoom and pan to the pixel grid at render time to stop shimmering; untick it for fully smooth orbiting.
 
 <table>
 <tr>

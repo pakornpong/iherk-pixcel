@@ -276,17 +276,21 @@ el("tt-anim-select").onchange = (e) => {
   state.ttFrame = 0;
   loadTurntableMesh();
 };
+function setSnapControlsEnabled(enabled) {
+  el("chk-tt-snap").disabled = !enabled;
+  el("tt-snap-select").disabled = !enabled || !el("chk-tt-snap").checked;
+}
 el("btn-mode-pixelart").onclick = () => {
   turntable.pixelMode = "pixelart";
   el("btn-mode-pixelart").classList.add("active");
   el("btn-mode-3d").classList.remove("active");
-  el("chk-tt-snap").disabled = el("tt-snap-select").disabled = false;
+  setSnapControlsEnabled(true);
 };
 el("btn-mode-3d").onclick = () => {
   turntable.pixelMode = "3d";
   el("btn-mode-3d").classList.add("active");
   el("btn-mode-pixelart").classList.remove("active");
-  el("chk-tt-snap").disabled = el("tt-snap-select").disabled = true;
+  setSnapControlsEnabled(false);
 };
 el("tt-px-range").oninput = (e) => {
   turntable.pixelSize = Number(e.target.value);
@@ -322,6 +326,7 @@ el("chk-tt-outline").onchange = (e) => {
 };
 el("chk-tt-snap").onchange = (e) => {
   turntable.pixelSnap = e.target.checked;
+  el("tt-snap-select").disabled = !e.target.checked;
 };
 el("tt-snap-select").onchange = (e) => {
   turntable.snapStepDeg = Number(e.target.value);

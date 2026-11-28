@@ -37,7 +37,7 @@ describe("snapAngle", () => {
 });
 
 describe("snapViewScale", () => {
-  it("snaps a fractional pixels-per-voxel up to a whole number", () => {
+  it("snaps a fractional pixels-per-voxel to the nearest whole number", () => {
     // halfH 10, fboH 48 -> ppv 2.4 -> 2 -> halfH 12
     const r = snapViewScale(10, 48);
     expect(r.pixelsPerVoxel).toBe(2);
@@ -56,11 +56,20 @@ describe("snapViewScale", () => {
     expect(Number.isFinite(r.worldPerPixel)).toBe(true);
     expect(Number.isFinite(r.halfH)).toBe(true);
   });
-  it("falls back to unsnapped values for degenerate bounds", () => {
-    const r = snapViewScale(0, 48);
-    expect(Number.isFinite(r.halfH)).toBe(true);
-    expect(Number.isFinite(r.worldPerPixel)).toBe(true);
-    expect(r.worldPerPixel).toBeGreaterThan(0);
+  it("substitutes 1 for an unusable halfH, which zooms in hard rather than passing through", () => {
+    for (const bad of [0, NaN, -5]) {
+      const r = snapViewScale(bad, 48);
+      expect(r.pixelsPerVoxel).toBe(24); // h = 1 -> 48 / 2
+      expect(r.halfH).toBeCloseTo(1);
+      expect(r.worldPerPixel).toBeCloseTo(1 / 24);
+    }
+  });
+  it("substitutes 1 for an unusable fboH", () => {
+    // f = 1, halfH 10 -> ppv 0.05 -> 1/20
+    const r = snapViewScale(10, 0);
+    expect(r.pixelsPerVoxel).toBeCloseTo(0.05);
+    expect(r.halfH).toBeCloseTo(10);
+    expect(r.worldPerPixel).toBeCloseTo(20);
   });
 });
 
@@ -82,6 +91,12 @@ const base = {
 };
 
 describe("computeRenderCamera", () => {
+  it("never writes through its state object", () => {
+    const frozen = Object.freeze({ ...base });
+    const before = JSON.stringify(frozen);
+    expect(() => computeRenderCamera(frozen)).not.toThrow();
+    expect(JSON.stringify(frozen)).toBe(before);
+  });
   it("snaps yaw, pan and view scale in pixelart mode", () => {
     // radius 22, zoom 1 -> halfH 29.04; fboH 120 -> ppv 2.066 -> 2 -> halfH 30, worldPerPixel 0.5
     const c = computeRenderCamera(base);
