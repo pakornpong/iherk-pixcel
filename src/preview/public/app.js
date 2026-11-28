@@ -42,6 +42,9 @@ const turntable = new VoxelTurntableViewport(el("turntable-canvas"), (info) => {
 });
 
 const meshCache = new Map();
+let meshRequestId = 0;
+let appliedMeshRequestId = 0;
+let requestedFramingKey;
 
 async function loadTurntableMesh(forceRefresh = false) {
   if (!state.selectedAsset) return;
@@ -49,20 +52,24 @@ async function loadTurntableMesh(forceRefresh = false) {
     el("tt-meta").textContent = "WebGL2 is unavailable in this browser.\nUse 2:1 Iso Inspector or Export 360° GIF.";
     return;
   }
-  const key = `${state.selectedAsset}|${state.selectedAnim}|${state.ttFrame}|${state.cacheBust}`;
-  // Captured before the await: building it afterwards reads live state, so an asset or clip
-  // switch mid-fetch would file the old mesh under the new key and freeze the new asset's framing.
-  const framingKey = `${state.selectedAsset}|${state.selectedAnim}|${state.cacheBust}`;
+  const { selectedAsset, selectedAnim, ttFrame, cacheBust } = state;
+  const framingKey = `${selectedAsset}|${selectedAnim}|${cacheBust}`;
+  const key = `${framingKey}|${ttFrame}`;
+  const requestId = ++meshRequestId;
+  requestedFramingKey = framingKey;
   let data = !forceRefresh ? meshCache.get(key) : null;
   if (!data) {
-    const animQuery = state.selectedAnim ? `&anim=${encodeURIComponent(state.selectedAnim)}` : "";
-    const url = `/api/mesh/${encodeURIComponent(state.selectedAsset)}?frame=${state.ttFrame}${animQuery}&t=${state.cacheBust}`;
+    const animQuery = selectedAnim ? `&anim=${encodeURIComponent(selectedAnim)}` : "";
+    const url = `/api/mesh/${encodeURIComponent(selectedAsset)}?frame=${ttFrame}${animQuery}&t=${cacheBust}`;
     const res = await fetch(url);
     if (!res.ok) return;
     data = await res.json();
     if (meshCache.size > 64) meshCache.clear();
     meshCache.set(key, data);
   }
+  // Keep playback moving while later frames load, but never render a frame behind one already shown.
+  if (framingKey !== requestedFramingKey || requestId < appliedMeshRequestId) return;
+  appliedMeshRequestId = requestId;
   state.ttFrameCount = data.frameCount || 1;
   turntable.uploadMesh(data.mesh, framingKey);
   const b = data.mesh.bounds;
