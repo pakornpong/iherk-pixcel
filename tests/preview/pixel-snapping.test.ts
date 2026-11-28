@@ -16,6 +16,9 @@ describe("snapAngle", () => {
     expect(snapAngle(37.4, 0)).toBe(37.4);
     expect(snapAngle(37.4, -5)).toBe(37.4);
   });
+  it("defaults to the one step that fits both the presets and the export lattice", () => {
+    expect(DEFAULT_SNAP_STEP_DEG).toBe(5);
+  });
   it("leaves every viewer preset and every export angle untouched at the default step", () => {
     // The eight preset directions in index.html, and the viewer's 315/30 default pose
     for (const yaw of [0, 45, 90, 135, 180, 225, 270, 315]) {
@@ -74,7 +77,7 @@ describe("snapPan", () => {
 
 const base = {
   yawDeg: 37.4, pitchDeg: 30, panX: 2.37, panY: -1.1, zoom: 1,
-  pixelSnap: true, yawSnapDeg: 5, pixelMode: "pixelart",
+  pixelSnap: true, snapStepDeg: DEFAULT_SNAP_STEP_DEG, pixelMode: "pixelart",
   radius: 22, fboW: 160, fboH: 120,
 };
 

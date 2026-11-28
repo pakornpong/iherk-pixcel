@@ -60,8 +60,8 @@ export function computeRenderCamera(state) {
   let panY = state.panY;
   let pixelsPerVoxel = fboH / (2 * halfH);
   if (snapping) {
-    yawDeg = snapAngle(yawDeg, state.yawSnapDeg);
-    pitchDeg = Math.max(-89, Math.min(89, snapAngle(pitchDeg, state.yawSnapDeg)));
+    yawDeg = snapAngle(yawDeg, state.snapStepDeg);
+    pitchDeg = Math.max(-89, Math.min(89, snapAngle(pitchDeg, state.snapStepDeg)));
     const scale = snapViewScale(halfH, fboH);
     halfH = scale.halfH;
     pixelsPerVoxel = scale.pixelsPerVoxel;
@@ -318,7 +318,7 @@ export class VoxelTurntableViewport {
     this.pixelMode = "pixelart"; // "pixelart" | "3d"
     this.pixelSize = 4; // Display pixels per logical pixel-art pixel
     this.pixelSnap = true; // Snap the rendered camera to the pixel grid (pixelart mode only)
-    this.yawSnapDeg = DEFAULT_SNAP_STEP_DEG;
+    this.snapStepDeg = DEFAULT_SNAP_STEP_DEG;
     this.outline = true;
     this.shading = true;
     this.lightLock = "camera"; // "camera" | "world"
@@ -620,7 +620,7 @@ export class VoxelTurntableViewport {
       panY: this.panY,
       zoom: this.zoom,
       pixelSnap: this.pixelSnap,
-      yawSnapDeg: this.yawSnapDeg,
+      snapStepDeg: this.snapStepDeg,
       pixelMode: this.pixelMode,
       radius: this.bounds.radius,
       fboW: this.fboW,

@@ -279,11 +279,13 @@ el("btn-mode-pixelart").onclick = () => {
   turntable.pixelMode = "pixelart";
   el("btn-mode-pixelart").classList.add("active");
   el("btn-mode-3d").classList.remove("active");
+  el("chk-tt-snap").disabled = el("tt-snap-select").disabled = false;
 };
 el("btn-mode-3d").onclick = () => {
   turntable.pixelMode = "3d";
   el("btn-mode-3d").classList.add("active");
   el("btn-mode-pixelart").classList.remove("active");
+  el("chk-tt-snap").disabled = el("tt-snap-select").disabled = true;
 };
 el("tt-px-range").oninput = (e) => {
   turntable.pixelSize = Number(e.target.value);
@@ -316,6 +318,12 @@ el("btn-tt-anim").onclick = () => {
 };
 el("chk-tt-outline").onchange = (e) => {
   turntable.outline = e.target.checked;
+};
+el("chk-tt-snap").onchange = (e) => {
+  turntable.pixelSnap = e.target.checked;
+};
+el("tt-snap-select").onchange = (e) => {
+  turntable.snapStepDeg = Number(e.target.value);
 };
 el("chk-tt-shading").onchange = (e) => {
   turntable.shading = e.target.checked;

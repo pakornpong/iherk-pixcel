@@ -50,6 +50,16 @@
             <input id="tt-speed-range" type="range" min="12" max="140" value="48" />
           </label>
           <label class="check"><input id="chk-tt-outline" type="checkbox" checked /> Silhouette Outline (1px)</label>
+          <label class="check"><input id="chk-tt-snap" type="checkbox" checked /> Pixel Snap (Stepped Rotation)</label>
+          <label>Snap Step
+            <select id="tt-snap-select">
+              <option value="5" selected>5°</option>
+              <option value="9">9°</option>
+              <option value="15">15°</option>
+              <option value="45">45°</option>
+              <option value="0">Off</option>
+            </select>
+          </label>
           <label class="check"><input id="chk-tt-shading" type="checkbox" checked /> Hue-Shifted Shading + AO</label>
           <label>Lighting
             <select id="tt-light-select">

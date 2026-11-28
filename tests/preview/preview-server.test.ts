@@ -27,6 +27,8 @@ describe("local web preview server", () => {
     expect(htmlText).toContain("frame-range");
     expect(htmlText).toContain("anim-select");
     expect(htmlText).toContain("btn-sandbox-load");
+    expect(htmlText).toContain('id="chk-tt-snap"');
+    expect(htmlText).toContain('id="tt-snap-select"');
 
     const listRes = await fetch(`${srv.url}/api/assets`);
     expect(listRes.status).toBe(200);
